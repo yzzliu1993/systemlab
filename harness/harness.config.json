@@ -1,0 +1,20 @@
+{
+  "linearTeam": "Youzhuliu",
+  "repo": "yzzliu1993/systemlab",
+  "baseBranch": "main",
+  "worktreeDir": "../systemlab-agent",
+  "claudePath": "claude",
+  "model": "sonnet",
+  "maxAttempts": 3,
+  "ciTimeoutMinutes": 20,
+  "implement": {
+    "maxTurns": 120,
+    "timeoutMinutes": 60
+  },
+  "branchTypeByLabel": {
+    "Bug": "fix",
+    "Feature": "feat",
+    "Improvement": "refactor"
+  },
+  "defaultBranchType": "feat"
+}

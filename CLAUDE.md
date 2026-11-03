@@ -12,6 +12,7 @@ React 19 + TypeScript + Vite 單頁應用。開發流程由 harness 自動化，
 | `npm run test` | 執行一次全部測試 |
 | `npx vitest run <路徑>` | 只跑指定的測試檔 |
 | `npm run dev` | 本機開發伺服器 |
+| `npm run harness -- run <票號>` | （人使用）讓 harness 處理一張 Todo 票，agent 不可執行 |
 
 ## 架構分層
 
