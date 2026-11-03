@@ -107,12 +107,14 @@ In Review ──[Review agent]──▶ approve ──▶ rebase main + 等 CI �
 
 | GitHub 事件 | Linear 狀態 | 誰觸發事件 |
 |---|---|---|
-| 分支 push | In Progress | Implement agent push |
-| PR 開啟 | In Review | orchestrator 在 CI 綠燈後開 PR |
+| PR 開啟 | In Review（Linear 預設為 In Progress，需在設定中改為 In Review） | orchestrator 在 CI 綠燈後開 PR |
 | PR merged | Done | 人按 merge |
 
+> 實測（YOU-8）：只 push 分支不會觸發狀態變更；Linear 是在 PR 開啟時才連結分支。
+
 原生連動做不到的轉換，由 orchestrator 用 `@linear/sdk` 直接呼叫 Linear API：
-- Todo → In Progress（認領當下，branch 還沒 push）
+- Todo → In Progress（認領當下）
+- In Progress → In Review（開 PR 後再設定一次，原生連動設定錯誤時仍能保持正確）
 - In Review → In Progress（Review 退件）
 - 標籤增減、handoff 留言
 
@@ -139,14 +141,15 @@ In Review ──[Review agent]──▶ approve ──▶ rebase main + 等 CI �
 所有 agent 以 `claude -p` 執行，共通參數：
 
 ```
-claude -p "<prompt>" \
+<prompt> | claude -p \
   --output-format json \
+  --model sonnet \
   --max-turns <見設定> \
   --mcp-config harness/mcp.json --strict-mcp-config \
-  --allowedTools "<白名單>" \
-  --append-system-prompt-file harness/prompts/<agent>.md
+  --allowedTools "<白名單>" --disallowedTools "<黑名單>"
 ```
 
+- Prompt 由 `harness/prompts/<agent>.md` 模板加上票券內容組成，經 stdin 傳入（避開 Windows 命令列長度與轉義問題）。
 - 權限一律用 `--allowedTools` 白名單控制。**不使用 `--permission-mode plan` 或 `default`**：無頭模式下沒有人能按允許，`default` 會讓需要權限的工具全部被拒；`plan` 則會擋掉寫入。
 - prompt 模板放在 `harness/prompts/`。
 - 每個 agent **最後一則訊息必須是 §4.6 的 JSON 結果**，orchestrator 以 zod 驗證；格式不符視為失敗。
@@ -191,6 +194,7 @@ claude -p "<prompt>" \
   "summary": "做了什麼（給人看）",
   "next_step": "若中斷，下一步該做什麼",
   "created_issues": ["YOU-12"],
+  "assumptions": ["規格不明確時採用的假設，會寫進 PR 內文"],
   "blocked_reason": "status=blocked 時必填"
 }
 ```
@@ -316,25 +320,35 @@ Orchestrator 啟動時與每次輪詢時：
 ```
 harness/
   src/
-    index.ts              # 進入點：載入設定、啟動輪詢迴圈
-    config.ts             # 讀取並以 zod 驗證 harness.config.json
-    loop.ts               # 主迴圈：恢復 → 認領 → 推進
-    stateMachine.ts       # §3 狀態轉換（純函式，可單元測試）
-    handoff.ts            # §6 handoff 讀寫與恢復
-    failures.ts           # §6.4 失敗分類、§7 熔斷
-    agents/runClaude.ts   # spawn claude -p、逾時終止、解析 JSON 結果
-    linear/client.ts      # Linear API（@linear/sdk）
-    github/client.ts      # gh CLI 包裝：PR、CI 狀態、merge
+    index.ts              # CLI 進入點（npm run harness -- run <票號>）           [Phase 1]
+    config.ts             # 讀取並以 zod 驗證 harness.config.json                 [Phase 1]
+    log.ts                # §9 每日 jsonl log                                     [Phase 1]
+    proc.ts               # 子行程執行、逾時終止整個行程樹                        [Phase 1]
+    prompts.ts            # prompt 模板載入與變數替換                             [Phase 1]
+    ticket.ts             # §2.3 票券格式檢查、§5 分支命名                        [Phase 1]
+    agents/result.ts      # claude 輸出與 §4.6 agent 結果解析                     [Phase 1]
+    agents/runClaude.ts   # spawn claude -p、移除 API key、組參數                 [Phase 1]
+    git/worktree.ts       # §11.2 agent worktree 準備、遠端分支查詢               [Phase 1]
+    linear/client.ts      # Linear API（@linear/sdk）                             [Phase 1]
+    github/client.ts      # gh CLI 包裝：等 CI、取失敗 log、開 PR                 [Phase 1]
+    stages/implement.ts   # Implement 流程                                        [Phase 1]
+    stages/review.ts      # Review 流程                                           [Phase 2]
+    handoff.ts            # §6 handoff 讀寫與恢復                                 [Phase 3]
+    failures.ts           # §6.4 失敗分類、§7 熔斷                                [Phase 3]
+    loop.ts               # 主迴圈：恢復 → 認領 → 推進                            [Phase 4]
   prompts/
-    decompose.md
-    implement.md
-    review.md
+    implement.md                                                                  [Phase 1]
+    review.md                                                                     [Phase 2]
+    decompose.md                                                                  [Phase 4]
   mcp.json                # agent 用的 Linear MCP 設定
-  harness.config.json     # 輪詢間隔、逾時、熔斷次數、標籤名稱、team key
+  harness.config.json     # team、repo、worktree 位置、模型、上限
+tsconfig.harness.json     # harness 的型別檢查設定（納入 tsc -b）
 .github/workflows/ci.yml
 .harness/                 # 本機快取與 log，加入 .gitignore
 CLAUDE.md                 # 專案規範（架構分層、測試慣例、禁止事項）
 ```
+
+- `harness/` 與 `src/` 互不相依（dependency-cruiser 檢查）。harness 測試在 vitest 的 `harness` project 以 node 環境執行。
 
 - Orchestrator 自己呼叫 Linear / GitHub 時用 API（`@linear/sdk`、`gh` CLI），**不透過 MCP**；MCP 只給 agent 用。
 - 祕密資訊（`LINEAR_API_KEY`、`GH_TOKEN`）只從環境變數讀取，不寫進設定檔或 log。
@@ -392,6 +406,6 @@ CLAUDE.md                 # 專案規範（架構分層、測試慣例、禁止�
 
 ### 11.3 Linear 一次性設定（Phase 0）
 1. 建立 §2.2 的標籤。
-2. Team Settings → Workflow → Pull request automations：開啟「branch push → In Progress」「PR open → In Review」「PR merged → Done」。
+2. Team Settings → Workflow → Pull request automations：「On PR open」設為 In Review、「On PR merge」設為 Done。
 3. 建立 Personal API key（Settings → Security & access），設成環境變數 `LINEAR_API_KEY`，給 orchestrator 使用。
 4. 確認 GitHub integration 已連結 `yzzliu1993/systemlab`。
