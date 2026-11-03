@@ -1,0 +1,12 @@
+{
+  "id": "web-basics",
+  "title": "Web 前端基礎",
+  "nodes": [
+    { "id": "html", "title": "HTML", "summary": "網頁的結構與語意標籤。", "prerequisites": [] },
+    { "id": "css", "title": "CSS", "summary": "樣式、版面與響應式設計。", "prerequisites": ["html"] },
+    { "id": "js", "title": "JavaScript", "summary": "語言基礎與瀏覽器 DOM。", "prerequisites": ["html"] },
+    { "id": "ts", "title": "TypeScript", "summary": "為 JavaScript 加上靜態型別。", "prerequisites": ["js"] },
+    { "id": "react", "title": "React", "summary": "以元件組成使用者介面。", "prerequisites": ["css", "ts"] },
+    { "id": "testing", "title": "前端測試", "summary": "單元測試與元件測試。", "prerequisites": ["react"] }
+  ]
+}
