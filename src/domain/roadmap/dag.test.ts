@@ -1,4 +1,4 @@
-import { CycleError, topologicalSort } from '@/domain/roadmap/dag';
+import { computeLevels, CycleError, topologicalSort } from '@/domain/roadmap/dag';
 
 describe('topologicalSort', () => {
   it('T1: 正常流程，每條邊 from 在 to 之前', () => {
@@ -40,5 +40,42 @@ describe('topologicalSort', () => {
 
   it('T5: 邊引用未知節點拋出 Error，message 包含該節點', () => {
     expect(() => topologicalSort(['a'], [['a', 'x']])).toThrow(/x/);
+  });
+});
+
+describe('computeLevels', () => {
+  it('T1: 正常流程', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['a', 'c'],
+      ['b', 'd'],
+      ['c', 'd'],
+    ];
+    expect(computeLevels(['a', 'b', 'c', 'd'], edges)).toEqual([['a'], ['b', 'c'], ['d']]);
+  });
+
+  it('T2: 最長路徑決定層級', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['b', 'c'],
+      ['a', 'c'],
+    ];
+    expect(computeLevels(['a', 'b', 'c'], edges)).toEqual([['a'], ['b'], ['c']]);
+  });
+
+  it('T3: 邊界值：空圖', () => {
+    expect(computeLevels([], [])).toEqual([]);
+  });
+
+  it('T4: 邊界值：無邊，維持原始順序', () => {
+    expect(computeLevels(['c', 'a', 'b'], [])).toEqual([['c', 'a', 'b']]);
+  });
+
+  it('T5: 錯誤處理：循環', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['b', 'a'],
+    ];
+    expect(() => computeLevels(['a', 'b'], edges)).toThrow(CycleError);
   });
 });
