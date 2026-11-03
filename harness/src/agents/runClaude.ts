@@ -13,6 +13,7 @@ export interface ClaudeRunOptions {
   /** 新 session 使用指定的 id，讓中斷後可以 --resume 接續。 */
   sessionId?: string;
   resumeSessionId?: string;
+  signal?: AbortSignal;
 }
 
 export type ClaudeRunOutcome =
@@ -66,6 +67,7 @@ export async function runClaude(config: Config, options: ClaudeRunOptions): Prom
     input: options.prompt,
     env: agentEnv(),
     timeoutMs: options.timeoutMinutes * 60_000,
+    signal: options.signal,
   });
   if (result.timedOut) return { kind: 'timeout', stderr: result.stderr };
 

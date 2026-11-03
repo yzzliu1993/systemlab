@@ -44,6 +44,19 @@ describe('decideStart', () => {
       .toEqual({ start: 'update_branch' });
   });
 
+  it('等 merge 時人移除 awaiting-merge：視為人工退件', () => {
+    expect(decideStart({ stateName: 'In Review', labelNames: [] }, { stage: 'awaiting_merge' }))
+      .toEqual({ start: 'human_rejected' });
+  });
+
+  it('取消的票若仍有 agent:working 則收尾', () => {
+    expect(decideStart({ stateName: 'Canceled', labelNames: ['agent:working'] })).toEqual({ start: 'finalize' });
+  });
+
+  it('Done 的票即使有 needs-human 也收尾', () => {
+    expect(decideStart({ stateName: 'Done', labelNames: ['needs-human', 'awaiting-merge'] })).toEqual({ start: 'finalize' });
+  });
+
   it('In Review 且 handoff 停在 review 時重新 review', () => {
     expect(decideStart({ stateName: 'In Review', labelNames: [] }, { stage: 'review' })).toEqual({ start: 'review' });
   });

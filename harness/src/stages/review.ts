@@ -13,6 +13,9 @@ export const REVIEW_TOOLS = {
   disallowed: ['Edit', 'Write', 'NotebookEdit'],
 };
 
+/** Harness 貼到 PR 的 review 開頭；用來和人工留言區分。 */
+export const HARNESS_REVIEW_PREFIX = '## 🤖 Harness Review';
+
 export type ReviewOutcome =
   | { kind: 'approve'; summary: string }
   | { kind: 'changes_requested'; summary: string }
@@ -67,7 +70,7 @@ export async function review(ctx: StageContext): Promise<ReviewOutcome> {
     }
 
     const { status, summary, blocked_reason } = outcome.result;
-    await github.commentOnPullRequest(prUrl, `## 🤖 Harness Review（第 ${round} 輪）：${status}\n\n${summary}`);
+    await github.commentOnPullRequest(prUrl, `${HARNESS_REVIEW_PREFIX}（第 ${round} 輪）：${status}\n\n${summary}`);
     log({ ticket: id, event: 'review_result', stage: 'review', round, status });
     await store.save({ attempt: 0, lastReview: summary });
 

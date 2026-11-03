@@ -1,5 +1,45 @@
 import { LinearClient } from '@linear/sdk';
 import { errorMessage, withRetry } from '../failures';
+import type { TicketSummary } from '../scheduler';
+
+interface RawIssue {
+  identifier: string;
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+  state: { name: string };
+  labels: { nodes: Array<{ name: string }> };
+  inverseRelations: { nodes: Array<{ type: string; issue: { state: { type: string } } }> };
+}
+
+/** 一次取回輪詢需要的所有欄位，避免 SDK 延遲載入造成大量請求（Linear API 有速率上限）。 */
+const ISSUES_QUERY = `
+query HarnessIssues($filter: IssueFilter!) {
+  issues(first: 150, filter: $filter) {
+    nodes {
+      identifier priority createdAt updatedAt
+      state { name }
+      labels { nodes { name } }
+      inverseRelations { nodes { type issue { state { type } } } }
+    }
+  }
+}`;
+
+const CLOSED_STATE_TYPES = ['completed', 'canceled'];
+
+function toSummary(raw: RawIssue): TicketSummary {
+  return {
+    identifier: raw.identifier,
+    stateName: raw.state.name,
+    labelNames: raw.labels.nodes.map((l) => l.name),
+    priority: raw.priority,
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt),
+    openBlockers: raw.inverseRelations.nodes.filter(
+      (r) => r.type === 'blocks' && !CLOSED_STATE_TYPES.includes(r.issue.state.type),
+    ).length,
+  };
+}
 
 export const LABELS = {
   working: 'agent:working',
@@ -131,6 +171,39 @@ export class Linear {
       const comments = await issue.comments({ first: 100 });
       return comments.nodes.map((c) => ({ id: c.id, body: c.body }));
     });
+  }
+
+  private async queryIssues(filter: Record<string, unknown>): Promise<TicketSummary[]> {
+    const teamId = await this.getTeamId();
+    const response = await retry(() =>
+      this.client.client.rawRequest<{ issues: { nodes: RawIssue[] } }, { filter: Record<string, unknown> }>(
+        ISSUES_QUERY,
+        { filter: { team: { id: { eq: teamId } }, ...filter } },
+      ),
+    );
+    return (response.data?.issues.nodes ?? []).map(toSummary);
+  }
+
+  /** 尚未結束（非 Done / Canceled）的票。 */
+  listOpenTickets(): Promise<TicketSummary[]> {
+    return this.queryIssues({ state: { type: { nin: CLOSED_STATE_TYPES } } });
+  }
+
+  /** 已 Done / Canceled 但仍留有 harness 標籤、需要收尾的票。 */
+  listClosedWithHarnessLabels(): Promise<TicketSummary[]> {
+    return this.queryIssues({
+      state: { type: { in: CLOSED_STATE_TYPES } },
+      labels: { some: { name: { in: [LABELS.awaitingMerge, LABELS.working] } } },
+    });
+  }
+
+  /** 指定時間後建立、內文含有標記的票（找出 agent 開的票，HARNESS_SPEC §8）。 */
+  async findCreatedWithMarker(since: Date, marker: string): Promise<string[]> {
+    const tickets = await this.queryIssues({
+      createdAt: { gte: since.toISOString() },
+      description: { contains: marker },
+    });
+    return tickets.map((t) => t.identifier);
   }
 
   /** 把票指派給 API key 的擁有者（你），讓 Linear 發通知（HARNESS_SPEC §3.4）。 */

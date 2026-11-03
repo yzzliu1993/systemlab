@@ -23,6 +23,13 @@ export const ConfigSchema = z.object({
   ciTimeoutMinutes: z.number().positive().default(20),
   implement: AgentLimits,
   review: AgentLimits.default({ maxTurns: 60, timeoutMinutes: 20 }),
+  decompose: AgentLimits.default({ maxTurns: 40, timeoutMinutes: 15 }),
+  /** 輪詢間隔（秒）。 */
+  pollSeconds: z.number().int().positive().default(60),
+  /** Backlog 票最後編輯後要等多久才拆解（分鐘），避免拆到還在寫的票。 */
+  decomposeGraceMinutes: z.number().nonnegative().default(30),
+  /** 只在這段時間認領新票，例如 "22:00-08:00"；未設定代表全天。 */
+  activeHours: z.string().optional(),
   branchTypeByLabel: z.record(z.string(), z.string()).default({}),
   defaultBranchType: z.string().default('feat'),
 });

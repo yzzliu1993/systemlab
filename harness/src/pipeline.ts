@@ -1,14 +1,14 @@
 import { HandoffStore, type Handoff } from './handoff';
 import { LABELS, type Ticket } from './linear/client';
 import { log } from './log';
-import { stopForHuman, type Deps, type StageContext } from './stages/common';
+import { stopForHuman, TicketCanceledError, type Deps, type StageContext } from './stages/common';
 import { implement } from './stages/implement';
-import { review } from './stages/review';
+import { HARNESS_REVIEW_PREFIX, review } from './stages/review';
 import { updateBranch } from './stages/updateBranch';
 import { branchNameFor, checkTicket } from './ticket';
 
 export type StartDecision =
-  | { start: 'implement' | 'review' | 'update_branch' | 'finalize' }
+  | { start: 'implement' | 'review' | 'update_branch' | 'finalize' | 'human_rejected' }
   | { start: 'skip'; reason: string };
 
 /** 依票的狀態、標籤與 handoff 紀錄決定從哪個階段開始（HARNESS_SPEC §3.1、§6.2）。 */
@@ -16,33 +16,57 @@ export function decideStart(
   ticket: Pick<Ticket, 'stateName' | 'labelNames'>,
   handoff?: Pick<Handoff, 'stage'>,
 ): StartDecision {
-  const awaitingMerge = ticket.labelNames.includes(LABELS.awaitingMerge) || handoff?.stage === 'awaiting_merge';
-  if (ticket.labelNames.includes(LABELS.needsHuman)) {
-    return { start: 'skip', reason: `有 ${LABELS.needsHuman} 標籤，處理完後移除標籤即可重新執行` };
-  }
-  if ((ticket.stateName === 'Done' || ticket.stateName === 'Canceled') && awaitingMerge) {
+  const hasLabel = (name: string) => ticket.labelNames.includes(name);
+  const closed = ticket.stateName === 'Done' || ticket.stateName === 'Canceled';
+  if (closed && (hasLabel(LABELS.awaitingMerge) || hasLabel(LABELS.working) || handoff?.stage === 'awaiting_merge')) {
     return { start: 'finalize' };
   }
-  if (awaitingMerge) return { start: 'skip', reason: '已通過 review，等待人工 merge' };
+  if (hasLabel(LABELS.needsHuman)) {
+    return { start: 'skip', reason: `有 ${LABELS.needsHuman} 標籤，處理完後移除標籤即可重新執行` };
+  }
+  if (hasLabel(LABELS.awaitingMerge)) return { start: 'skip', reason: '已通過 review，等待人工 merge' };
   switch (ticket.stateName) {
     case 'Todo':
     case 'In Progress':
       return { start: 'implement' };
     case 'In Review':
+      // 等 merge 時人移除了 awaiting-merge 標籤：視為人工退件（HARNESS_SPEC §5）。
+      if (handoff?.stage === 'awaiting_merge') return { start: 'human_rejected' };
       return { start: handoff?.stage === 'update_branch' ? 'update_branch' : 'review' };
     default:
       return { start: 'skip', reason: `狀態為 ${ticket.stateName}，只處理 Todo、In Progress、In Review` };
   }
 }
 
-export type PipelineResult = 'awaiting_merge' | 'stopped' | 'skipped' | 'finalized';
+export type PipelineResult = 'awaiting_merge' | 'stopped' | 'skipped' | 'finalized' | 'canceled';
 
-/** Merge 後收尾：移除標籤，handoff 改寫為最終狀態。 */
+/** Merge 或取消後收尾：移除標籤，handoff 改寫為最終狀態。 */
 async function finalize(deps: Deps, ticket: Ticket, store: HandoffStore): Promise<void> {
   await deps.linear.removeLabel(ticket, LABELS.awaitingMerge);
   await deps.linear.removeLabel(ticket, LABELS.working);
-  if (store.value) await store.save({ stage: 'done', inFlight: undefined, nextStep: '—' });
+  if (store.value) {
+    await store.save({ stage: 'done', inFlight: undefined, nextStep: ticket.stateName === 'Canceled' ? '票已取消，分支保留' : '—' });
+  }
   log({ ticket: ticket.identifier, event: 'state_change', status: `${ticket.stateName}（收尾完成）` });
+}
+
+/** 人移除 awaiting-merge：把 PR 上的人工意見當作退件意見交給 Implement。 */
+async function takeHumanRejection(ctx: StageContext): Promise<'implement' | 'stopped'> {
+  const { deps, store } = ctx;
+  const prUrl = store.value!.prUrl!;
+  const comments = await deps.github.humanFeedback(prUrl, HARNESS_REVIEW_PREFIX);
+  if (comments.length === 0) {
+    await stopForHuman(ctx, 'review', `偵測到 \`${LABELS.awaitingMerge}\` 被移除（人工退件），但 PR 上沒有人工留言。請在 ${prUrl} 留下要修改的地方後移除 \`${LABELS.needsHuman}\`。`);
+    return 'stopped';
+  }
+  const rejections = store.value!.rejections + 1;
+  await store.save({
+    rejections,
+    feedback: `人工 review 退件，PR 上的意見如下（以這些為準，優先於先前的 harness review）：\n\n${comments.map((c) => `- ${c}`).join('\n')}`,
+    mustChangeFrom: (await deps.github.pullRequestState(prUrl)).headSha,
+  });
+  log({ ticket: ctx.ticket.identifier, event: 'review_result', stage: 'review', status: 'human_rejected', round: rejections });
+  return 'implement';
 }
 
 /**
@@ -85,8 +109,8 @@ export async function runTicket(deps: Deps, identifier: string): Promise<Pipelin
 
   store.startHeartbeat();
   try {
-    let stage = decision.start;
-    if (stage !== 'implement' && !store.value!.prUrl) {
+    let stage: 'implement' | 'review' | 'update_branch' = decision.start === 'human_rejected' ? 'implement' : decision.start;
+    if (decision.start !== 'implement' && !store.value!.prUrl) {
       const prUrl = await github.findOpenPullRequest(store.value!.branch);
       if (!prUrl) {
         await stopForHuman(ctx, 'review', `票在 In Review，但分支 \`${store.value!.branch}\` 沒有開著的 PR。`);
@@ -94,6 +118,7 @@ export async function runTicket(deps: Deps, identifier: string): Promise<Pipelin
       }
       await store.save({ prUrl });
     }
+    if (decision.start === 'human_rejected' && (await takeHumanRejection(ctx)) === 'stopped') return 'stopped';
 
     for (;;) {
       if (stage === 'implement') {
@@ -149,6 +174,12 @@ export async function runTicket(deps: Deps, identifier: string): Promise<Pipelin
       log({ ticket: id, event: 'awaiting_merge', pr: prUrl, sha: updated.sha });
       return 'awaiting_merge';
     }
+  } catch (err) {
+    if (!(err instanceof TicketCanceledError)) throw err;
+    // 票被取消：agent 已終止，保留分支與 handoff，移除認領鎖（HARNESS_SPEC §3.5）。
+    log({ ticket: id, event: 'state_change', status: 'Canceled，已終止 agent' });
+    await finalize(deps, await linear.getTicket(id), store);
+    return 'canceled';
   } finally {
     store.stopHeartbeat();
   }

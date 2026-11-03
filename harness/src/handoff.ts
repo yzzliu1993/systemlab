@@ -5,7 +5,7 @@ import type { Linear, Ticket } from './linear/client';
 /** Handoff 紀錄（HARNESS_SPEC §6.1）。權威來源是 Linear 上的單一留言。 */
 export const HANDOFF_MARKER = '<!-- harness:handoff -->';
 
-const StageSchema = z.enum(['implement', 'review', 'update_branch', 'awaiting_merge', 'done']);
+const StageSchema = z.enum(['decompose', 'implement', 'review', 'update_branch', 'awaiting_merge', 'done']);
 export type HandoffStage = z.infer<typeof StageSchema>;
 
 export const HandoffSchema = z.object({
@@ -56,6 +56,7 @@ function clip(text: string | undefined): string | undefined {
 }
 
 const STAGE_LABEL: Record<HandoffStage, string> = {
+  decompose: '拆解',
   implement: '實作',
   review: 'Review',
   update_branch: '更新分支 / CI',
@@ -67,7 +68,7 @@ const STAGE_LABEL: Record<HandoffStage, string> = {
 export function renderHandoff(h: Handoff): string {
   const rows = [
     ['階段', STAGE_LABEL[h.stage] + (h.inFlight ? `（執行中，session \`${h.inFlight.sessionId}\`）` : '')],
-    ['分支', `\`${h.branch}\``],
+    ['分支', h.branch ? `\`${h.branch}\`` : '—'],
     ['PR', h.prUrl ?? '—'],
     ['最後 commit', h.lastCommit ? `\`${h.lastCommit.slice(0, 7)}\`` : '—'],
     ['本階段失敗次數', String(h.attempt)],

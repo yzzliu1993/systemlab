@@ -130,7 +130,9 @@ In Review ──[Review agent]──▶ approve ──▶ rebase main + 等 CI �
 你處理完後把指派人清掉（或移除 `needs-human`），orchestrator 就會接手。
 
 ### 3.5 暫停與取消
-- 暫停整個系統：在 repo 根目錄建立 `.harness/PAUSE` 檔案；orchestrator 會在目前的 agent 結束後停止認領新票，刪除檔案即恢復。
+- 啟動：`npm run harness -- loop`（常駐輪詢）；`npm run harness -- plan` 只顯示下一張會處理的票。同時只能有一個 orchestrator（`.harness/orchestrator.lock`）。
+- 暫停整個系統：在 repo 根目錄建立 `.harness/PAUSE` 檔案；orchestrator 會在**目前這張票處理完後**停止認領新票（收尾 merge 後的票仍會進行），刪除檔案即恢復。
+- 只認領 `Todo`；沒有 `agent:working` 的 `In Progress` 視為人自己在做的票。`In Review` 的票只有在有 handoff 紀錄時才會接手，人自己開 PR 的票不受影響。
 - 取消單一張票：把票移到 `Canceled`；orchestrator 偵測到後終止該票的 agent、保留 branch 不刪。
 - 你手動 push 到 agent 的 branch 是允許的；orchestrator 恢復時以遠端 branch 最新 commit 為準（§6.2）。
 
@@ -311,7 +313,7 @@ Orchestrator 啟動時與每次輪詢時：
 防止票券爆量：
 - 建立前先用 `list_issues` 搜尋相似標題，有就留言補充，不重開。
 - 每次 agent 執行最多開 3 張票。
-- `agent-proposed` 的 Backlog 票**不會**被自動拆解。你看過覺得要做，移除 `agent-proposed` 標籤即可，下一輪就會被拆解。
+- `agent-proposed` 的票（不論在 Backlog 或 Todo）**都不會**被自動處理。你看過覺得要做，移除 `agent-proposed` 標籤即可，下一輪就會被拆解或實作。`spec-needed` 的票同樣只給人回答，不會被自動處理。
 - 所有 agent 開的票都要在內文附上來源票號與發現的情境。
 
 **標籤強制檢查**：agent 透過 MCP 開票時用的是你的 Linear 帳號，所以 Linear 上「建立者」都是你，無法用建立者區分人開的票和 agent 開的票。因此：
@@ -344,7 +346,9 @@ harness/
     pipeline.ts           # 單張票流程：起始階段判斷、退件迴圈、awaiting-merge    [Phase 2]
     handoff.ts            # §6 handoff 讀寫與恢復                                 [Phase 3]
     failures.ts           # §6.4 失敗分類、§7 熔斷                                [Phase 3]
-    loop.ts               # 主迴圈：恢復 → 認領 → 推進                            [Phase 4]
+    loop.ts               # 主迴圈：收尾 → 暫停/時段檢查 → 選票 → 執行、單一實例鎖 [Phase 4]
+    scheduler.ts          # §3.1 選票規則（純函式）、執行時段                    [Phase 4]
+    stages/decompose.ts   # Decompose 階段                                        [Phase 4]
   prompts/
     implement.md                                                                  [Phase 1]
     review.md                                                                     [Phase 2]

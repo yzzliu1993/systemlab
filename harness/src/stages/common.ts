@@ -21,7 +21,51 @@ export interface StageContext {
   store: HandoffStore;
 }
 
-export type Stage = 'implement' | 'review' | 'update_branch';
+export type Stage = 'implement' | 'review' | 'update_branch' | 'decompose';
+
+/** 票在處理途中被移到 Canceled（HARNESS_SPEC §3.5）。 */
+export class TicketCanceledError extends Error {
+  constructor(identifier: string) {
+    super(`${identifier} 已被取消`);
+    this.name = 'TicketCanceledError';
+  }
+}
+
+const CANCEL_POLL_MS = 2 * 60_000;
+export const AGENT_CREATED_MARKER = 'harness:created-by-agent';
+
+/** agent 執行期間定期檢查票是否被取消，取消時中止子行程。 */
+function watchCancellation(deps: Deps, identifier: string): { signal: AbortSignal; stop: () => void } {
+  const controller = new AbortController();
+  const timer = setInterval(() => {
+    deps.linear.getTicket(identifier)
+      .then((t) => {
+        if (t.stateName === 'Canceled') controller.abort();
+      })
+      .catch(() => undefined);
+  }, CANCEL_POLL_MS);
+  timer.unref();
+  return { signal: controller.signal, stop: () => clearInterval(timer) };
+}
+
+/**
+ * Agent 透過 MCP 開票時建立者也是你，因此以結果中的 created_issues 與內文標記找出 agent 開的票，
+ * 缺少 agent-proposed / spec-needed 時補上 agent-proposed（HARNESS_SPEC §8）。
+ */
+async function enforceAgentLabels(deps: Deps, source: string, since: Date, reported: string[]): Promise<void> {
+  const found = await deps.linear.findCreatedWithMarker(since, AGENT_CREATED_MARKER);
+  for (const identifier of new Set([...reported, ...found])) {
+    try {
+      const created = await deps.linear.getTicket(identifier);
+      if (!created.labelNames.includes(LABELS.agentProposed) && !created.labelNames.includes(LABELS.specNeeded)) {
+        await deps.linear.addLabel(created, LABELS.agentProposed);
+        log({ ticket: source, event: 'state_change', status: `${identifier} 補上 ${LABELS.agentProposed}` });
+      }
+    } catch (err) {
+      log({ ticket: source, event: 'error', error: `檢查 agent 開的票 ${identifier} 失敗：${String(err)}` });
+    }
+  }
+}
 
 export function describeFailure(outcome: Exclude<ClaudeRunOutcome, { kind: 'ok' }>): string {
   return outcome.kind === 'timeout' ? 'agent 執行逾時' : outcome.error;
@@ -84,7 +128,7 @@ export async function runAgent(
   ctx: StageContext,
   stage: Stage,
   attempt: number,
-  options: Omit<ClaudeRunOptions, 'sessionId' | 'resumeSessionId'>,
+  options: Omit<ClaudeRunOptions, 'sessionId' | 'resumeSessionId' | 'signal'>,
   resume?: { sessionId: string; reason: string },
 ): Promise<ClaudeRunOutcome> {
   const { deps, ticket, store } = ctx;
@@ -97,10 +141,15 @@ export async function runAgent(
     await store.save({ inFlight: { stage: stage as HandoffStage, sessionId, startedAt: new Date().toISOString() } });
     log({ ticket: id, event: resumeReason ? 'resume' : 'agent_start', stage, attempt, sessionId, status: resumeReason });
     const startedAt = Date.now();
+    const cancel = watchCancellation(deps, id);
     const outcome = await runClaudeWithResultFix(deps.config, resumeReason
-      ? { ...options, prompt: resumePrompt(resumeReason), resumeSessionId: sessionId }
-      : { ...options, sessionId });
+      ? { ...options, prompt: resumePrompt(resumeReason), resumeSessionId: sessionId, signal: cancel.signal }
+      : { ...options, sessionId, signal: cancel.signal }).finally(cancel.stop);
+    if (cancel.signal.aborted) throw new TicketCanceledError(id);
     logAgentEnd(id, stage, attempt, startedAt, outcome);
+    if (outcome.kind === 'ok' && stage !== 'decompose') {
+      await enforceAgentLabels(deps, id, new Date(startedAt), outcome.result.created_issues);
+    }
     if (outcome.kind === 'ok' && outcome.output.session_id) sessionId = outcome.output.session_id;
 
     if (outcome.kind === 'failed') {

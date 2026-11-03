@@ -16,6 +16,12 @@
     "maxTurns": 60,
     "timeoutMinutes": 20
   },
+  "decompose": {
+    "maxTurns": 40,
+    "timeoutMinutes": 15
+  },
+  "pollSeconds": 60,
+  "decomposeGraceMinutes": 30,
   "branchTypeByLabel": {
     "Bug": "fix",
     "Feature": "feat",

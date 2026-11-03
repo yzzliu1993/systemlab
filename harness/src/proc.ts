@@ -7,6 +7,8 @@ export interface RunOptions {
   timeoutMs?: number;
   /** 只給固定參數的 `.cmd` 指令使用（Windows 上 `.cmd` 必須經由 shell 執行）。 */
   shell?: boolean;
+  /** 中止時終止整個行程樹（例如票被取消）。 */
+  signal?: AbortSignal;
 }
 
 export interface RunResult {
@@ -63,13 +65,21 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
             if (child.pid !== undefined) killTree(child.pid);
           }, options.timeoutMs);
 
+    const onAbort = () => {
+      if (pid !== undefined) killTree(pid);
+    };
+    if (options.signal?.aborted) onAbort();
+    options.signal?.addEventListener('abort', onAbort, { once: true });
+
     child.on('error', (err) => {
       clearTimeout(timer);
+      options.signal?.removeEventListener('abort', onAbort);
       if (pid !== undefined) activeChildren.delete(pid);
       reject(err);
     });
     child.on('close', (code) => {
       clearTimeout(timer);
+      options.signal?.removeEventListener('abort', onAbort);
       if (pid !== undefined) activeChildren.delete(pid);
       resolve({ code, stdout, stderr, timedOut });
     });

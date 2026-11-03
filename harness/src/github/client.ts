@@ -86,6 +86,26 @@ export class GitHub {
     throw new Error(`PR ${prUrl} 的 merge 狀態持續為 UNKNOWN`);
   }
 
+  /**
+   * PR 上人留下的意見（一般留言、review 內容、逐行留言），排除 harness 自己貼的 review。
+   * 人與 harness 用同一個 GitHub 帳號，所以以內容開頭區分。
+   */
+  async humanFeedback(prUrl: string, harnessPrefix: string): Promise<string[]> {
+    const number = prNumberFromUrl(prUrl);
+    const view = z.object({
+      comments: z.array(z.object({ body: z.string() })),
+      reviews: z.array(z.object({ body: z.string() })),
+    }).parse(JSON.parse(await this.gh(['pr', 'view', String(number), '--json', 'comments,reviews'])));
+    const inline = z.array(z.object({ path: z.string(), line: z.number().nullable(), body: z.string() })).parse(
+      JSON.parse(await withRetry(() => runOrThrow('gh', ['api', `repos/${this.repo}/pulls/${number}/comments`]))),
+    );
+    return [
+      ...view.comments.map((c) => c.body),
+      ...view.reviews.map((r) => r.body),
+      ...inline.map((c) => `\`${c.path}${c.line ? `:${c.line}` : ''}\`：${c.body}`),
+    ].filter((body) => body.trim() && !body.startsWith(harnessPrefix));
+  }
+
   /** 以 rebase 方式把 base 的最新變更更新進 PR 分支（在 GitHub 上執行，不需本機 force push）。 */
   async updateBranch(prUrl: string): Promise<{ ok: true } | { ok: false; error: string }> {
     const args = ['pr', 'update-branch', String(prNumberFromUrl(prUrl)), '--rebase', '--repo', this.repo];
