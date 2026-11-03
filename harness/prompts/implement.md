@@ -20,6 +20,13 @@
 5. 以符合規範的訊息 commit（例：`feat({{identifier}}): ...`），然後執行 `git push origin {{branch}}`。
 6. 輸出結果（見下方）。
 
+## 處理上一輪的問題
+若上方有「上一輪的問題」段落，先處理它再做其他事：
+- **Review 退件**：逐條處理「必須修正」的項目；「建議」項目可自行判斷。不同意某項意見時，不要硬改，在 `summary` 說明理由。
+- **CI 失敗**：依 log 修正，並在本機用 `npm run harness:verify` 確認。
+- **與 `{{baseBranch}}` 衝突**：執行 `git fetch origin` 與 `git merge origin/{{baseBranch}}`，解決衝突後 commit 並 push。不要使用 rebase。
+- 這一輪必須產生新的 commit 並 push。
+
 ## 規格不明確時
 - 有保守做法：照做，並用 Linear MCP 在 Backlog 開一張 `spec-needed` 票記錄問題（先用 list_issues 搜尋避免重複），內文開頭加上 `<!-- harness:created-by-agent source={{identifier}} -->`。
 - 沒有保守做法（例如需要新增套件、修改設定檔或禁止修改的檔案）：不要硬做，直接回傳 `blocked` 並說明原因。

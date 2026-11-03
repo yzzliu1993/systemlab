@@ -7,6 +7,6 @@ export function renderTemplate(template: string, vars: Record<string, string | n
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(vars[key] ?? ''));
 }
 
-export function loadPrompt(name: 'implement'): string {
+export function loadPrompt(name: 'implement' | 'review'): string {
   return readFileSync(path.join(HARNESS_DIR, 'prompts', `${name}.md`), 'utf8');
 }

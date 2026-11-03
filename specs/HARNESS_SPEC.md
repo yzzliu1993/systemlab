@@ -173,8 +173,10 @@ In Review ──[Review agent]──▶ approve ──▶ rebase main + 等 CI �
 ### 4.3 Review
 - 輸入：票內容（含驗收條件）、PR diff、CI 結果。
 - 做什麼：獨立 context 審查。逐條確認驗收條件有對應的實作，且 §2.3 的每個測試情境（T1、T2…）都有對應的測試；缺任何一個即回傳 `changes_requested`。
-- 意見以 PR review comment 留下（`gh pr review`）。
-- 白名單：`Read, Glob, Grep, Bash(gh pr diff *), Bash(gh pr view *), Bash(gh pr review *), Bash(npm run harness:verify), mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__save_issue`
+- Agent 在 worktree 中以 `git diff origin/main...HEAD` 審查，不需要 `gh`。Review 內容放在結果的 `summary`，由 **orchestrator** 以 `gh pr comment` 貼到 PR。（同一個 GitHub 帳號無法對自己的 PR 送出 approve / request changes，所以不用 `gh pr review`。）
+- 退件標準只限：驗收條件未達成、測試情境缺漏或沒有真的驗證、正確性問題、違反 `CLAUDE.md`、超出範圍。風格偏好只能列為「建議」，避免無限退件。
+- 第 2 輪以後會收到上一輪的 review，重點確認「必須修正」是否已處理。
+- 白名單：`Read, Glob, Grep, Bash(git diff*), Bash(git log*), Bash(git show*), mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__save_issue`
 - **不做 merge**。拿到 `approve` 後，orchestrator 在 PR 留言貼上 review 摘要，並在 Linear 留言通知「等待人工 merge」，由人按 merge（見 §5）。
 
 ### 4.4 開衍生票的規則（所有 agent 共用）
@@ -209,7 +211,7 @@ In Review ──[Review agent]──▶ approve ──▶ rebase main + 等 CI �
 - CI：`.github/workflows/ci.yml`，在任何分支 push 時執行 `npm ci && npm run harness:verify`（job 名稱 `verify`，branch protection 以此為必要檢查）。只用 push 觸發即可：PR 的檢查狀態取自 head commit，不需另外以 `pull_request` 觸發，避免同一個 commit 跑兩次。Node 版本以 `.nvmrc` 為準。
 - PR 標題：`[YOU-12] <票標題>`，內文附上票連結與驗收條件 checklist。
 - Merge：squash merge，merge 後刪除分支。
-- Merge 前一律 rebase 到最新 `main` 並重跑 CI；rebase 衝突 → 回到 Implement 解衝突（計入失敗次數）。
+- Merge 前若分支落後 `main`，orchestrator 以 `gh pr update-branch --rebase` 在 GitHub 上更新（不需本機 force push），並等更新後的 head 通過 CI。衝突或 CI 失敗 → 回到 Implement，由 agent `git merge origin/main` 解衝突（agent 不可 rebase），修正後重新 review。此迴圈最多 3 次。
 - Branch protection（`main`）：要求 CI 綠燈、禁止直接 push、**不設定「需要 approve 數」**。
 - **人工關卡 = 人按 merge**：agent 用的是你自己的 GitHub 帳號，GitHub 不允許 approve 自己的 PR，所以人工審核的方式是由你親自按 squash merge，而不是按 approve。orchestrator 偵測到 PR merged 後收尾（移除 `awaiting-merge`、handoff 改寫為最終摘要、刪分支）。
 - 你若不同意 Review 的結論：在 PR 留下 review comment，並移除 `awaiting-merge` 標籤，orchestrator 會把它當成一次退件，帶著你的意見回到 Implement。
@@ -331,8 +333,11 @@ harness/
     git/worktree.ts       # §11.2 agent worktree 準備、遠端分支查詢               [Phase 1]
     linear/client.ts      # Linear API（@linear/sdk）                             [Phase 1]
     github/client.ts      # gh CLI 包裝：等 CI、取失敗 log、開 PR                 [Phase 1]
-    stages/implement.ts   # Implement 流程                                        [Phase 1]
-    stages/review.ts      # Review 流程                                           [Phase 2]
+    stages/implement.ts   # Implement 階段                                        [Phase 1]
+    stages/common.ts      # 階段共用：停止交給人、記錄 agent 結果                 [Phase 2]
+    stages/review.ts      # Review 階段                                           [Phase 2]
+    stages/updateBranch.ts# merge 前更新分支 + CI                                 [Phase 2]
+    pipeline.ts           # 單張票流程：起始階段判斷、退件迴圈、awaiting-merge    [Phase 2]
     handoff.ts            # §6 handoff 讀寫與恢復                                 [Phase 3]
     failures.ts           # §6.4 失敗分類、§7 熔斷                                [Phase 3]
     loop.ts               # 主迴圈：恢復 → 認領 → 推進                            [Phase 4]
