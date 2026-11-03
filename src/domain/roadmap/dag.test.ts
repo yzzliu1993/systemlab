@@ -1,4 +1,59 @@
-import { computeLevels, CycleError, topologicalSort } from '@/domain/roadmap/dag';
+import {
+  computeLevels,
+  CycleError,
+  getDependents,
+  getPrerequisites,
+  topologicalSort,
+} from '@/domain/roadmap/dag';
+
+describe('getPrerequisites / getDependents', () => {
+  const nodes = ['a', 'b', 'c', 'd'];
+
+  it('T1: 正常流程：前置', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['b', 'd'],
+      ['c', 'd'],
+    ];
+    expect(getPrerequisites('d', nodes, edges)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('T2: 正常流程：後續', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['b', 'd'],
+      ['c', 'd'],
+    ];
+    expect(getDependents('a', nodes, edges)).toEqual(['b', 'd']);
+  });
+
+  it('T3: 菱形不重複', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['a', 'c'],
+      ['b', 'd'],
+      ['c', 'd'],
+    ];
+    expect(getPrerequisites('d', nodes, edges)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('T4: 邊界值：孤立節點', () => {
+    expect(getPrerequisites('a', ['a', 'b'], [])).toEqual([]);
+    expect(getDependents('a', ['a', 'b'], [])).toEqual([]);
+  });
+
+  it('T5: 錯誤處理：未知節點', () => {
+    expect(() => getDependents('x', ['a'], [])).toThrow(/x/);
+  });
+
+  it('T6: 錯誤處理：循環', () => {
+    const edges: Array<[string, string]> = [
+      ['a', 'b'],
+      ['b', 'a'],
+    ];
+    expect(() => getPrerequisites('a', ['a', 'b'], edges)).toThrow(CycleError);
+  });
+});
 
 describe('topologicalSort', () => {
   it('T1: 正常流程，每條邊 from 在 to 之前', () => {

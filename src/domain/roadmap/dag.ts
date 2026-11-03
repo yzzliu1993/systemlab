@@ -97,3 +97,60 @@ export function computeLevels(
   }
   return levels;
 }
+
+function reachable(
+  nodeId: string,
+  nodes: string[],
+  edges: Array<[from: string, to: string]>,
+  direction: 'backward' | 'forward',
+): string[] {
+  if (!nodes.includes(nodeId)) throw new Error(`Unknown node: ${nodeId}`);
+  const order = topologicalSort(nodes, edges);
+
+  const adjacent = new Map<string, string[]>();
+  for (const [from, to] of edges) {
+    const key = direction === 'backward' ? to : from;
+    const value = direction === 'backward' ? from : to;
+    const list = adjacent.get(key) ?? [];
+    list.push(value);
+    adjacent.set(key, list);
+  }
+
+  const visited = new Set<string>();
+  const stack = [nodeId];
+  while (stack.length > 0) {
+    const current = stack.pop() as string;
+    for (const next of adjacent.get(current) ?? []) {
+      if (!visited.has(next)) {
+        visited.add(next);
+        stack.push(next);
+      }
+    }
+  }
+  visited.delete(nodeId);
+  return order.filter((n) => visited.has(n));
+}
+
+/**
+ * 回傳 nodeId 所有直接與間接的前置節點（不含自己），依 topologicalSort 順序。
+ * nodeId 不在 nodes 中拋出 Error；循環拋出 CycleError。
+ */
+export function getPrerequisites(
+  nodeId: string,
+  nodes: string[],
+  edges: Array<[from: string, to: string]>,
+): string[] {
+  return reachable(nodeId, nodes, edges, 'backward');
+}
+
+/**
+ * 回傳 nodeId 所有直接與間接的後續節點（不含自己），依 topologicalSort 順序。
+ * nodeId 不在 nodes 中拋出 Error；循環拋出 CycleError。
+ */
+export function getDependents(
+  nodeId: string,
+  nodes: string[],
+  edges: Array<[from: string, to: string]>,
+): string[] {
+  return reachable(nodeId, nodes, edges, 'forward');
+}
