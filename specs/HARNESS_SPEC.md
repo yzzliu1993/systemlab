@@ -255,6 +255,10 @@ heartbeat: 2026-11-04T10:32:00Z
 - 票到 Done 後，handoff 留言改寫為最終摘要（總嘗試次數、耗時），保留在票上作為紀錄。
 - `session_id` 對應的完整對話存在本機 `~/.claude/projects/`，只有這台電腦能 `--resume`；換電腦時改用開新 session 並帶入 handoff。
 
+> 實作（Phase 3）：留言上半部是給人看的表格，下半部是 orchestrator 讀取的 JSON 區塊（欄位定義見 `harness/src/handoff.ts`）。
+> 除上述欄位外另有：`pendingCiSha`（已 push、等待 CI 的 commit）、`feedback`（重工原因）、`lastFailure`（上次嘗試失敗的完整原因）、`mustChangeFrom`、`lastReview`、`rejections`、`fixRounds`、`stoppedForHuman`、`inFlight`（執行中的 agent session）。
+> 每次啟動 agent 前以 `--session-id` 指定 session 並寫入 `inFlight`，中斷後以 `--resume` 接續同一個 session，worktree 保留未 commit 的修改。
+
 ### 6.2 恢復流程
 Orchestrator 啟動時與每次輪詢時：
 1. 找出有 `agent:working` 的票。

@@ -16,12 +16,22 @@ export async function remoteBranchSha(cwd: string, branch: string): Promise<stri
  * 準備 agent 用的 worktree（HARNESS_SPEC §11.2）：
  * 不存在就建立；切到目標分支（遠端已有就接續，否則從 base 開新分支）；清掉未提交的殘留。
  */
-export async function prepareWorktree(dir: string, branch: string, baseBranch: string): Promise<void> {
+export async function prepareWorktree(
+  dir: string,
+  branch: string,
+  baseBranch: string,
+  options: { keepLocalChanges?: boolean } = {},
+): Promise<void> {
   if (!existsSync(dir)) {
     await git(REPO_ROOT, 'fetch', 'origin', baseBranch);
     await git(REPO_ROOT, 'worktree', 'add', '--detach', dir, `origin/${baseBranch}`);
   }
   await git(dir, 'fetch', 'origin');
+  // 接續中斷的 session 時保留尚未 commit 的修改，否則 agent 的進度會被清掉。
+  if (options.keepLocalChanges && (await git(dir, 'branch', '--show-current')) === branch) {
+    await ensureDependencies(dir);
+    return;
+  }
   const start = (await remoteBranchSha(dir, branch)) ? `origin/${branch}` : `origin/${baseBranch}`;
   await git(dir, 'checkout', '-B', branch, start);
   await git(dir, 'reset', '--hard', start);

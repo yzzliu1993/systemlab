@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { z } from 'zod';
+import { classifyFailure, errorMessage, withRetry } from '../failures';
 import { run, runOrThrow } from '../proc';
 
 const RunSchema = z.object({
@@ -23,8 +24,12 @@ export class GitHub {
     this.repo = repo;
   }
 
+  /** 執行 gh；網路或 GitHub 5xx 等暫時性錯誤會以退避重試。 */
   private gh(args: string[]): Promise<string> {
-    return runOrThrow('gh', [...args, '--repo', this.repo]);
+    return withRetry(() => runOrThrow('gh', [...args, '--repo', this.repo]), {
+      onRetry: (err, attempt, delayMs) =>
+        console.warn(`gh 暫時性錯誤，${delayMs / 60_000} 分鐘後第 ${attempt} 次重試：${errorMessage(err)}`),
+    });
   }
 
   /** 等待指定 commit 的 CI 結束。CI 可能晚幾秒才出現，找不到時持續等待直到逾時。 */
@@ -83,7 +88,14 @@ export class GitHub {
 
   /** 以 rebase 方式把 base 的最新變更更新進 PR 分支（在 GitHub 上執行，不需本機 force push）。 */
   async updateBranch(prUrl: string): Promise<{ ok: true } | { ok: false; error: string }> {
-    const result = await run('gh', ['pr', 'update-branch', String(prNumberFromUrl(prUrl)), '--rebase', '--repo', this.repo]);
+    const args = ['pr', 'update-branch', String(prNumberFromUrl(prUrl)), '--rebase', '--repo', this.repo];
+    // 衝突是正常結果（回傳 ok: false），只有暫時性錯誤才重試。
+    const result = await withRetry(async () => {
+      const r = await run('gh', args);
+      const output = (r.stderr || r.stdout).trim();
+      if (r.code !== 0 && classifyFailure(output) === 'transient') throw new Error(output);
+      return r;
+    });
     return result.code === 0 ? { ok: true } : { ok: false, error: (result.stderr || result.stdout).trim() };
   }
 }
