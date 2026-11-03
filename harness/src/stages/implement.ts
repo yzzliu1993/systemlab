@@ -1,5 +1,5 @@
 import { worktreePath, type Config } from '../config';
-import { runClaude, type ClaudeRunOutcome } from '../agents/runClaude';
+import { runClaudeWithResultFix, type ClaudeRunOutcome } from '../agents/runClaude';
 import type { AgentResult } from '../agents/result';
 import { remoteBranchSha, prepareWorktree } from '../git/worktree';
 import type { GitHub } from '../github/client';
@@ -104,7 +104,7 @@ export async function runImplement(deps: Deps, identifier: string): Promise<'pr_
 
     log({ ticket: identifier, event: 'agent_start', stage: 'implement', attempt });
     const startedAt = Date.now();
-    const outcome = await runClaude(config, {
+    const outcome = await runClaudeWithResultFix(config, {
       prompt,
       cwd,
       allowedTools: tools.allowed,
@@ -118,8 +118,8 @@ export async function runImplement(deps: Deps, identifier: string): Promise<'pr_
       feedback = describeFailure(outcome);
       log({
         ticket: identifier, event: 'agent_end', stage: 'implement', attempt, status: 'failed', durationSec,
-        turns: outcome.kind === 'failed' ? outcome.output?.num_turns : undefined,
-        sessionId: outcome.kind === 'failed' ? outcome.output?.session_id : undefined,
+        turns: 'output' in outcome ? outcome.output?.num_turns : undefined,
+        sessionId: 'output' in outcome ? outcome.output?.session_id : undefined,
         error: feedback,
       });
       continue;

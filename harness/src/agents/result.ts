@@ -13,14 +13,19 @@ const ClaudeOutputSchema = z.object({
 
 export type ClaudeOutput = z.infer<typeof ClaudeOutputSchema>;
 
+/** Agent 常把條列內容輸出成陣列；接受字串或字串陣列，統一成換行分隔的字串。 */
+const text = z
+  .union([z.string(), z.array(z.string())])
+  .transform((v) => (Array.isArray(v) ? v.map((line) => `- ${line}`).join('\n') : v));
+
 /** Agent 最後一則訊息必須輸出的結果（HARNESS_SPEC §4.6）。 */
 export const AgentResultSchema = z.object({
   status: z.enum(['done', 'changes_requested', 'approve', 'blocked']),
-  summary: z.string(),
-  next_step: z.string().default(''),
+  summary: text,
+  next_step: text.default(''),
   created_issues: z.array(z.string()).default([]),
   assumptions: z.array(z.string()).default([]),
-  blocked_reason: z.string().optional(),
+  blocked_reason: text.optional(),
 });
 
 export type AgentResult = z.infer<typeof AgentResultSchema>;

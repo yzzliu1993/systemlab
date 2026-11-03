@@ -36,6 +36,11 @@ describe('extractAgentResult', () => {
     });
   });
 
+  it('summary 為陣列時轉成條列字串（YOU-10 實際案例）', () => {
+    const result = extractAgentResult('```json\n{"status":"done","summary":["新增 dag.ts","新增測試"]}\n```');
+    expect(result).toMatchObject({ ok: true, value: { summary: '- 新增 dag.ts\n- 新增測試' } });
+  });
+
   it('T3: 最後輸出不是合法 JSON 時回傳格式錯誤', () => {
     const result = extractAgentResult('```json\n{status: done}\n```');
     expect(result.ok).toBe(false);

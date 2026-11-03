@@ -32,6 +32,11 @@ describe('buildClaudeArgs', () => {
     expect(args).not.toContain('--resume');
   });
 
+  it('工具白名單為空時不傳 --allowedTools', () => {
+    const args = buildClaudeArgs(config, { prompt: 'p', cwd: '.', allowedTools: [], maxTurns: 1, timeoutMinutes: 1 });
+    expect(args).not.toContain('--allowedTools');
+  });
+
   it('有 session id 時加上 --resume', () => {
     const args = buildClaudeArgs(config, {
       prompt: 'p', cwd: '.', allowedTools: [], maxTurns: 1, timeoutMinutes: 1, resumeSessionId: 's1',
