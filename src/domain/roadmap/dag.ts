@@ -71,3 +71,29 @@ function findCycle(
   const cycle = path.slice(seen.get(current)).reverse();
   return [...cycle, cycle[0]];
 }
+
+/**
+ * 節點分層：無前置節點者在第 0 層，其餘 = 所有前置節點最大層級 + 1。
+ * 同一層內維持 nodes 中的原始順序。循環或未知節點的錯誤同 topologicalSort。
+ */
+export function computeLevels(
+  nodes: string[],
+  edges: Array<[from: string, to: string]>,
+): string[][] {
+  const order = topologicalSort(nodes, edges);
+  const level = new Map<string, number>();
+  for (const n of order) level.set(n, 0);
+  for (const n of order) {
+    const base = level.get(n) ?? 0;
+    for (const [from, to] of edges) {
+      if (from === n) level.set(to, Math.max(level.get(to) ?? 0, base + 1));
+    }
+  }
+
+  const levels: string[][] = [];
+  for (const n of new Set(nodes)) {
+    const l = level.get(n) ?? 0;
+    (levels[l] ??= []).push(n);
+  }
+  return levels;
+}
