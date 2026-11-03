@@ -30,6 +30,23 @@ describe('decideStart', () => {
   it('T3: Backlog 不處理（由 Decompose 負責）', () => {
     expect(decideStart({ stateName: 'Backlog', labelNames: [] }).start).toBe('skip');
   });
+
+  it('merge 後（Done 且仍有 awaiting-merge）進行收尾', () => {
+    expect(decideStart({ stateName: 'Done', labelNames: ['awaiting-merge'] })).toEqual({ start: 'finalize' });
+  });
+
+  it('Done 且 handoff 停在 awaiting_merge 也進行收尾', () => {
+    expect(decideStart({ stateName: 'Done', labelNames: [] }, { stage: 'awaiting_merge' })).toEqual({ start: 'finalize' });
+  });
+
+  it('In Review 且 handoff 停在更新分支時，接續更新分支而不重新 review', () => {
+    expect(decideStart({ stateName: 'In Review', labelNames: [] }, { stage: 'update_branch' }))
+      .toEqual({ start: 'update_branch' });
+  });
+
+  it('In Review 且 handoff 停在 review 時重新 review', () => {
+    expect(decideStart({ stateName: 'In Review', labelNames: [] }, { stage: 'review' })).toEqual({ start: 'review' });
+  });
 });
 
 describe('prNumberFromUrl', () => {

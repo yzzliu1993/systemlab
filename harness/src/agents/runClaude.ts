@@ -10,6 +10,8 @@ export interface ClaudeRunOptions {
   disallowedTools?: string[];
   maxTurns: number;
   timeoutMinutes: number;
+  /** 新 session 使用指定的 id，讓中斷後可以 --resume 接續。 */
+  sessionId?: string;
   resumeSessionId?: string;
 }
 
@@ -53,6 +55,7 @@ export function buildClaudeArgs(config: Config, options: ClaudeRunOptions): stri
   if (options.allowedTools.length) args.push('--allowedTools', options.allowedTools.join(','));
   if (options.disallowedTools?.length) args.push('--disallowedTools', options.disallowedTools.join(','));
   if (options.resumeSessionId) args.push('--resume', options.resumeSessionId);
+  else if (options.sessionId) args.push('--session-id', options.sessionId);
   return args;
 }
 

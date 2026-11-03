@@ -1,7 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
-import type { Ticket } from '../linear/client';
 import { log } from '../log';
-import type { Deps } from './common';
+import type { StageContext } from './common';
 
 export type UpdateBranchOutcome =
   | { kind: 'ready'; sha: string }
@@ -12,9 +11,11 @@ export type UpdateBranchOutcome =
  * Merge 前的收尾檢查（HARNESS_SPEC §5）：分支落後 base 時以 rebase 更新，
  * 並確認更新後的 head 通過 CI。
  */
-export async function updateBranch(deps: Deps, ticket: Ticket, prUrl: string): Promise<UpdateBranchOutcome> {
-  const { config, github } = deps;
-  const id = ticket.identifier;
+export async function updateBranch(ctx: StageContext): Promise<UpdateBranchOutcome> {
+  const { config, github } = ctx.deps;
+  const id = ctx.ticket.identifier;
+  const prUrl = ctx.store.value!.prUrl!;
+  await ctx.store.save({ stage: 'update_branch', nextStep: '更新分支到最新的 base 並等待 CI' });
 
   let state = await github.pullRequestState(prUrl);
   if (state.mergeState === 'BEHIND') {

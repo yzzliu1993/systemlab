@@ -29,6 +29,14 @@ function killTree(pid: number): void {
   }
 }
 
+const activeChildren = new Set<number>();
+
+/** 終止所有仍在執行的子行程（Ctrl+C 時呼叫）。 */
+export function killAllChildren(): void {
+  for (const pid of activeChildren) killTree(pid);
+  activeChildren.clear();
+}
+
 /** 執行指令（不經過 shell，參數不會被轉義破壞）。 */
 export function run(command: string, args: string[], options: RunOptions = {}): Promise<RunResult> {
   return new Promise((resolve, reject) => {
@@ -39,6 +47,8 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
       windowsHide: true,
       shell: options.shell ?? false,
     });
+    const pid = child.pid;
+    if (pid !== undefined) activeChildren.add(pid);
     let stdout = '';
     let stderr = '';
     let timedOut = false;
@@ -55,10 +65,12 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
 
     child.on('error', (err) => {
       clearTimeout(timer);
+      if (pid !== undefined) activeChildren.delete(pid);
       reject(err);
     });
     child.on('close', (code) => {
       clearTimeout(timer);
+      if (pid !== undefined) activeChildren.delete(pid);
       resolve({ code, stdout, stderr, timedOut });
     });
 
