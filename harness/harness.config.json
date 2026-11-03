@@ -6,10 +6,15 @@
   "claudePath": "claude",
   "model": "sonnet",
   "maxAttempts": 3,
+  "maxReviewRounds": 3,
   "ciTimeoutMinutes": 20,
   "implement": {
     "maxTurns": 120,
     "timeoutMinutes": 60
+  },
+  "review": {
+    "maxTurns": 60,
+    "timeoutMinutes": 20
   },
   "branchTypeByLabel": {
     "Bug": "fix",

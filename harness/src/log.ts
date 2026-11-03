@@ -12,7 +12,10 @@ export type LogEvent =
   | 'circuit_break'
   | 'quota_pause'
   | 'resume'
-  | 'pr_created';
+  | 'pr_created'
+  | 'review_result'
+  | 'branch_update'
+  | 'awaiting_merge';
 
 export interface LogEntry {
   ticket: string;

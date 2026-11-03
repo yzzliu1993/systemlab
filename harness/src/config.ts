@@ -19,8 +19,10 @@ export const ConfigSchema = z.object({
   claudePath: z.string().default('claude'),
   model: z.string().default('sonnet'),
   maxAttempts: z.number().int().positive().default(3),
+  maxReviewRounds: z.number().int().positive().default(3),
   ciTimeoutMinutes: z.number().positive().default(20),
   implement: AgentLimits,
+  review: AgentLimits.default({ maxTurns: 60, timeoutMinutes: 20 }),
   branchTypeByLabel: z.record(z.string(), z.string()).default({}),
   defaultBranchType: z.string().default('feat'),
 });
