@@ -168,6 +168,28 @@ Maintain **one** comment on the ticket that starts with `<!-- harness:progress -
 | Next step | … |
 ```
 
+## Friction comment
+
+At the end of **every** run, including a run that stops at step 8 or hands off to a human, record what went wrong in this run. Do it then, not at close-out: close-out may happen in a later session that does not know what happened.
+
+Maintain **one** comment on the ticket that starts with `<!-- harness:friction -->`. Create it on the first problem and add rows after that. Never rewrite or remove existing rows. If nothing went wrong, leave no comment.
+
+```markdown
+<!-- harness:friction -->
+**Harness friction**
+| Type | What happened | Workaround |
+|---|---|---|
+| failure / format / permission / workaround / human | … | … |
+```
+
+- `failure`: a step failed for a reason the "Failures" row does not explain.
+- `format`: a subagent's reply broke its required format.
+- `permission`: a permission prompt or denial interrupted the flow.
+- `workaround`: you did something the skill does not describe to get past a problem.
+- `human`: a human had to step in, other than the normal merge of a protected path PR.
+
+Record facts, not guesses. Rejected reviews and failures already in the progress comment do not need a row. `/retro` reads this comment.
+
 ## Forbidden
 
 - `gh pr merge` anywhere except step 8, `gh pr merge --admin`, `git push --force`, pushing directly to `main`, `git reset --hard`.
