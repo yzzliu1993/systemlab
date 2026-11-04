@@ -80,6 +80,11 @@ How to find human comments after a review: read PR comments and review bodies (`
 
 ## 3. Implement
 
+When you reach this step from 5 or 7, get onto the PR branch first. A resumed run can start on any branch, and `implementer` commits to the current one. `<branch>` is the PR's `headRefName`.
+
+1. If `git status --porcelain` is not empty, report it and stop. Do not switch branches, stash or discard anything.
+2. Run `git switch <branch> && git pull --ff-only`. If this fails, report the error and stop.
+
 Call the `implementer` subagent with the Agent tool. Include:
 - The ticket id, branch name and full ticket body.
 - For rework: the "Must fix" list or the CI failure log (key excerpts).
@@ -103,9 +108,12 @@ Read the json at the end of its reply:
 ## 5. Wait for CI
 
 ```bash
-gh run list --branch <branch> --commit $(git rev-parse HEAD) --json databaseId,status,conclusion
+gh pr view <n> --json headRefName,headRefOid
+gh run list --branch <headRefName> --commit <headRefOid> --json databaseId,status,conclusion
 gh run watch <databaseId> --exit-status
 ```
+
+Use the PR's head commit, not local `HEAD`, because a resumed run may be on another branch. If this run just pushed, repeat the first command until `headRefOid` equals `git rev-parse HEAD`: GitHub can return the previous head for a few seconds after a push. Keep this `headRefOid` for step 6.
 
 Right after a push the run may not exist yet; wait 15 seconds and check again. Use a Bash timeout of 600000 for `gh run watch`.
 
@@ -124,7 +132,7 @@ Read the json block at the end of the reply before posting anything. Never infer
 Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp file>`), starting with:
 
 ```
-<!-- harness:review round=<N> sha=<git rev-parse HEAD> verdict=<verdict> -->
+<!-- harness:review round=<N> sha=<headRefOid from step 5> verdict=<verdict> -->
 ## 🤖 Harness Review (round <N>)
 ```
 
