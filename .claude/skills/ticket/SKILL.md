@@ -11,6 +11,24 @@ You are the orchestrator. You advance the flow and **verify** results. Code goes
 
 Ticket id: `$ARGUMENTS` (called `<ID>` below; `<id>` is the lowercase form, for example `you-20`). Linear team: `Youzhuliu`. Repo: `yzzliu1993/systemlab`.
 
+## Before step 0: check that this skill is current
+
+This skill loads from the working copy, so local `main` may hold an old version. Check first, and change nothing else until this passes:
+
+```bash
+git fetch origin --prune
+git diff --quiet HEAD...origin/main -- .claude/skills/ticket/SKILL.md
+```
+
+The three dots show only what `main` changed since this branch left it, so a branch's own edits to the skill do not count.
+
+- Exit code 0 → the skill is current. Continue with step 0.
+- Exit code 1 → the skill differs:
+  1. If `git status --porcelain` is not empty, report that the skill is out of date and the working directory is not clean, then stop. Do not stash or discard anything.
+  2. Note the current branch, or the commit if `HEAD` is detached, then run `git switch main && git pull --ff-only`. If this fails, report the error and stop.
+  3. Read `.claude/skills/ticket/SKILL.md` with the Read tool and follow that version from here on, not the text you loaded. If you were not on `main`, switch back to what you noted.
+- Any other result, such as a failed fetch → report the error and stop.
+
 ## 0. Read and check the ticket
 
 1. Get the ticket with `mcp__linear__get_issue` (`includeRelations: true`).
