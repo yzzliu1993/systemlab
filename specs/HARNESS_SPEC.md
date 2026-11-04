@@ -164,10 +164,11 @@ Guardrails:
 - The PR opens after the first push (the ticket moves to In Review with it). Later CI results and reviews all stay on the same PR.
 - If the PR falls behind main before merging: `gh pr update-branch --rebase`, then wait for CI on the new head. Conflicts are resolved by the implementer with `git merge origin/main`.
 - **The human gate is a person pressing squash merge on PRs that do not qualify for auto-merge** (one GitHub account cannot approve its own PR, so reviews are posted as PR comments).
+- Squash commit titles: auto-merge sets `<type>(YOU-n): <description> (#<n>)` with `--subject`. A human merge keeps the title GitHub suggests: the commit message for a PR with one commit, otherwise the PR title, `[YOU-n] ...`. Both forms are accepted on `main`, so a human does not edit the title.
 
 ### 5.1 Auto-merge
 
-`/ticket` step 8 runs `gh pr merge <n> --squash` only when all of these hold:
+`/ticket` step 8 runs `gh pr merge <n> --subject "<type>(<ID>): <description> (#<n>)" --squash` only when all of these hold:
 
 - CI is green on the PR head commit.
 - The latest harness review has `verdict=approve` and its `sha` equals the PR head commit.

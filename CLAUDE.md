@@ -65,6 +65,7 @@ Write all new repo content, test names, commit messages, PR titles and bodies, a
   `type` ∈ `feat | fix | infr | refactor | docs | test`.
 - Commit: `<type>(<ticket id>): <description>`, for example `feat(YOU-12): add roadmap DAG layout`.
 - PR title: `[YOU-12] <ticket title>`. The merge method is squash merge.
+- Squash commit title: auto-merge sets `<type>(<ticket id>): <description> (#<n>)`. A human merge keeps the title GitHub suggests, which is the PR title when the PR has two or more commits. Both forms are accepted on `main`, so do not edit the title by hand.
 
 ## Harness flow rules
 
@@ -72,7 +73,7 @@ For the full flow see `specs/HARNESS_SPEC.md`, `.claude/skills/` and `.claude/ag
 
 - The **main session** (when running `/ticket`, `/next`, `/decompose` or `/retro`) owns Linear state, pushes and PRs. Product code goes to the `implementer` subagent, and review goes to `reviewer`.
 - **Always forbidden**: merging PRs outside the auto-merge below, `gh pr merge --admin`, `git push --force`, pushing directly to `main`, `git reset --hard`.
-- **Auto-merge**: only `/ticket` step 8 may merge, with `gh pr merge <n> --squash`, and only when CI is green on the PR head commit, the latest harness review is `approve` for that commit, `mergeStateStatus` is `CLEAN`, and no changed file is a protected path. Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`. Otherwise a human merges.
+- **Auto-merge**: only `/ticket` step 8 may merge, with `gh pr merge <n> --subject "<type>(<ID>): <description> (#<n>)" --squash`, and only when CI is green on the PR head commit, the latest harness review is `approve` for that commit, `mergeStateStatus` is `CLEAN`, and no changed file is a protected path. Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`. Otherwise a human merges.
 - **Forbidden for subagents**: changing Linear, pushing, merging, and modifying `.github/workflows/`, `.claude/`, `CLAUDE.md`, `specs/`, dependencies in `package.json`, or config files (`tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`). When one of these is needed, return `blocked` and explain why.
 - Do only what the ticket explicitly states. When the spec is unclear, take the most conservative approach (spec §8) and list it in the "Assumptions" section of the PR body.
 - New tickets opened by an agent start with `<!-- harness:created-by-agent source=<source ticket id> -->` and carry the `agent-proposed` or `spec-needed` label.
