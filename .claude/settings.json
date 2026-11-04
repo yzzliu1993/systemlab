@@ -23,5 +23,19 @@
       "Bash(git reset --hard *)",
       "mcp__linear__delete_comment"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && npx prettier --write src --log-level warn 2>/dev/null || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
   }
 }

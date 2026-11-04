@@ -67,7 +67,9 @@ function findCycle(
   while (!seen.has(current)) {
     seen.set(current, path.length);
     path.push(current);
-    current = [...(predecessors.get(current) ?? [])].find((p) => !done.has(p)) as string;
+    current = [...(predecessors.get(current) ?? [])].find(
+      (p) => !done.has(p),
+    ) as string;
   }
   // path walks backward along predecessors; reverse it to get the edge direction.
   const cycle = path.slice(seen.get(current)).reverse();

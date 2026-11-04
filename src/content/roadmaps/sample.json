@@ -2,11 +2,41 @@
   "id": "web-basics",
   "title": "Web Frontend Basics",
   "nodes": [
-    { "id": "html", "title": "HTML", "summary": "Page structure and semantic tags.", "prerequisites": [] },
-    { "id": "css", "title": "CSS", "summary": "Styling, layout and responsive design.", "prerequisites": ["html"] },
-    { "id": "js", "title": "JavaScript", "summary": "Language basics and the browser DOM.", "prerequisites": ["html"] },
-    { "id": "ts", "title": "TypeScript", "summary": "Adds static types to JavaScript.", "prerequisites": ["js"] },
-    { "id": "react", "title": "React", "summary": "Builds user interfaces from components.", "prerequisites": ["css", "ts"] },
-    { "id": "testing", "title": "Frontend Testing", "summary": "Unit tests and component tests.", "prerequisites": ["react"] }
+    {
+      "id": "html",
+      "title": "HTML",
+      "summary": "Page structure and semantic tags.",
+      "prerequisites": []
+    },
+    {
+      "id": "css",
+      "title": "CSS",
+      "summary": "Styling, layout and responsive design.",
+      "prerequisites": ["html"]
+    },
+    {
+      "id": "js",
+      "title": "JavaScript",
+      "summary": "Language basics and the browser DOM.",
+      "prerequisites": ["html"]
+    },
+    {
+      "id": "ts",
+      "title": "TypeScript",
+      "summary": "Adds static types to JavaScript.",
+      "prerequisites": ["js"]
+    },
+    {
+      "id": "react",
+      "title": "React",
+      "summary": "Builds user interfaces from components.",
+      "prerequisites": ["css", "ts"]
+    },
+    {
+      "id": "testing",
+      "title": "Frontend Testing",
+      "summary": "Unit tests and component tests.",
+      "prerequisites": ["react"]
+    }
   ]
 }

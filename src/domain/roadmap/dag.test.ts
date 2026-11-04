@@ -106,7 +106,11 @@ describe('computeLevels', () => {
       ['b', 'd'],
       ['c', 'd'],
     ];
-    expect(computeLevels(['a', 'b', 'c', 'd'], edges)).toEqual([['a'], ['b', 'c'], ['d']]);
+    expect(computeLevels(['a', 'b', 'c', 'd'], edges)).toEqual([
+      ['a'],
+      ['b', 'c'],
+      ['d'],
+    ]);
   });
 
   it('T2: longest path determines the level', () => {
@@ -115,7 +119,11 @@ describe('computeLevels', () => {
       ['b', 'c'],
       ['a', 'c'],
     ];
-    expect(computeLevels(['a', 'b', 'c'], edges)).toEqual([['a'], ['b'], ['c']]);
+    expect(computeLevels(['a', 'b', 'c'], edges)).toEqual([
+      ['a'],
+      ['b'],
+      ['c'],
+    ]);
   });
 
   it('T3: boundary: empty graph', () => {

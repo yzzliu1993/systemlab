@@ -24,7 +24,12 @@ function catchError(fn: () => unknown): unknown {
 describe('loadRoadmap', () => {
   it('T1: happy path: diamond', () => {
     const result = loadRoadmap(
-      roadmap([node('a'), node('b', ['a']), node('c', ['a']), node('d', ['b', 'c'])]),
+      roadmap([
+        node('a'),
+        node('b', ['a']),
+        node('c', ['a']),
+        node('d', ['b', 'c']),
+      ]),
     );
     expect(result.nodes).toEqual(['a', 'b', 'c', 'd']);
     expect(result.edges).toEqual([
@@ -60,12 +65,16 @@ describe('loadRoadmap', () => {
     const error = catchError(() => loadRoadmap(bad));
     expect(error).toBeInstanceOf(RoadmapValidationError);
     expect((error as RoadmapValidationError).issues).toEqual(
-      expect.arrayContaining([expect.objectContaining({ path: 'nodes[0].title' })]),
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'nodes[0].title' }),
+      ]),
     );
   });
 
   it('T6: error handling: missing prerequisite', () => {
-    const error = catchError(() => loadRoadmap(roadmap([node('a'), node('b', ['zzz'])])));
+    const error = catchError(() =>
+      loadRoadmap(roadmap([node('a'), node('b', ['zzz'])])),
+    );
     expect(error).toBeInstanceOf(RoadmapReferenceError);
     const ref = error as RoadmapReferenceError;
     expect(ref.name).toBe('RoadmapReferenceError');
@@ -75,7 +84,9 @@ describe('loadRoadmap', () => {
   });
 
   it('T7: error handling: cycle', () => {
-    const error = catchError(() => loadRoadmap(roadmap([node('a', ['b']), node('b', ['a'])])));
+    const error = catchError(() =>
+      loadRoadmap(roadmap([node('a', ['b']), node('b', ['a'])])),
+    );
     expect(error).toBeInstanceOf(CycleError);
     const message = (error as CycleError).message;
     expect(message).toContain('Cycle detected:');
@@ -88,7 +99,9 @@ describe('loadRoadmap', () => {
   });
 
   it('T9: error handling: multiple missing', () => {
-    const error = catchError(() => loadRoadmap(roadmap([node('a', ['x']), node('b', ['y'])])));
+    const error = catchError(() =>
+      loadRoadmap(roadmap([node('a', ['x']), node('b', ['y'])])),
+    );
     expect(error).toBeInstanceOf(RoadmapReferenceError);
     expect((error as RoadmapReferenceError).nodeId).toBe('a');
     expect((error as RoadmapReferenceError).missing).toBe('x');
