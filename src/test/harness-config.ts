@@ -54,6 +54,10 @@ export function checkSettings(file: string, content: string): string[] {
       'git push --force-with-lease rule',
       (r) => r.includes('git push') && r.includes('--force-with-lease'),
     ],
+    [
+      'git push -f rule',
+      (r) => r.includes('git push') && /\s-f(?![-\w])/.test(r),
+    ],
     ['git reset --hard rule', (r) => r.includes('git reset --hard')],
     [
       'gh pr merge --admin rule',

@@ -72,6 +72,7 @@ const fullDeny = [
   'Bash(gh pr merge *--admin*)',
   'Bash(git push --force *)',
   'Bash(git push * --force-with-lease)',
+  'Bash(git push -f *)',
   'Bash(git reset --hard *)',
 ];
 
@@ -134,6 +135,13 @@ describe('harness config', () => {
     const problems = checkSettings('settings.json', validSettings(deny));
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain('git push --force rule');
+  });
+
+  it('T2: missing git push -f rule is reported by name', () => {
+    const deny = fullDeny.filter((r) => !/\s-f(?![-\w])/.test(r));
+    const problems = checkSettings('settings.json', validSettings(deny));
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('git push -f rule');
   });
 
   it('T6: protected path list missing package.json names file and path', () => {
