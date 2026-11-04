@@ -1,39 +1,39 @@
 ---
 name: next
-description: 從 Linear 挑出下一張該處理的票並處理到底（收尾已 merge 的票 → 接續中斷的票 → Todo → Backlog 拆解）。可搭配 /loop 定時執行。
+description: Pick the next ticket from Linear and process it to the end (close out merged tickets → resume interrupted tickets → Todo → Backlog decomposition). Can run on a timer with /loop.
 disable-model-invocation: true
 ---
 
 # /next
 
-一次只處理**一張**票。規格見 `specs/HARNESS_SPEC.md` §3。Linear team：`Youzhuliu`。
+Process only **one** ticket at a time. See `specs/HARNESS_SPEC.md` §3 for the spec. Linear team: `Youzhuliu`.
 
-## 0. 前置檢查
+## 0. Preflight
 
-- repo 根目錄有 `.harness/PAUSE` 檔案 → 只做步驟 1 的收尾，回報「已暫停」後結束。
-- 工作目錄不乾淨（`git status --porcelain` 非空）→ 回報後結束，不要動使用者的修改。
+- If the repo root has a `.harness/PAUSE` file → do only the close-out in step 1, report "paused", then finish.
+- If the working directory is not clean (`git status --porcelain` is not empty) → report it and finish. Do not touch the user's changes.
 
-## 1. 收尾
+## 1. Close out
 
-`mcp__linear__list_issues`（team `Youzhuliu`、`label: "awaiting-merge"`）中狀態為 Done 或 Canceled 的票：移除 `awaiting-merge`，進度留言改寫為最終摘要。全部處理完再繼續。
+For tickets from `mcp__linear__list_issues` (team `Youzhuliu`, `label: "awaiting-merge"`) whose state is Done or Canceled: remove `awaiting-merge` and rewrite the progress comment as a final summary. Finish all of them before continuing.
 
-## 2. 選票（依序，找到第一張就停）
+## 2. Pick a ticket (in order, stop at the first match)
 
-跳過有 `needs-human`、`spec-needed`、`agent-proposed`、`draft` 標籤的票。
+Skip tickets with a `needs-human`, `spec-needed`, `agent-proposed` or `draft` label.
 
-1. **中斷的票**：狀態 In Progress，且票上有 `<!-- harness:progress -->` 留言（沒有這則留言的 In Progress 票是人自己在做的，跳過）。
-2. **人工退件**：狀態 In Review、沒有 `awaiting-merge`、有 `<!-- harness:progress -->` 留言。
-3. **Todo**：狀態 Todo，所有 blocked-by 都已 Done（`get_issue` 的 `includeRelations: true`）。排序：priority 1→4，0（無）最後；同 priority 依建立時間，舊的先。
-4. **Backlog 拆解**：狀態 Backlog，沒有 `decomposed` 標籤，最後更新時間超過 30 分鐘前（避免拆到還在寫的票），且內文**沒有** `<!-- harness:created-by-agent` 標記（agent 開的票不自動拆）。
+1. **Interrupted tickets**: state In Progress, with a `<!-- harness:progress -->` comment on the ticket (an In Progress ticket without this comment is one a human is working on, so skip it).
+2. **Human rejections**: state In Review, no `awaiting-merge`, with a `<!-- harness:progress -->` comment.
+3. **Todo**: state Todo, and all blocked-by tickets are Done (`includeRelations: true` on `get_issue`). Sort by priority 1→4, with 0 (none) last; within a priority, by creation time, oldest first.
+4. **Backlog decomposition**: state Backlog, no `decomposed` label, last updated more than 30 minutes ago (to avoid decomposing a ticket still being written), and the body does **not** have the `<!-- harness:created-by-agent` marker (agent-opened tickets are not decomposed automatically).
 
-## 3. 執行
+## 3. Run
 
-- 1～3 → 依 `.claude/skills/ticket/SKILL.md` 的流程處理該票（等同 `/ticket <票號>`）。
-- 4 → 依 `.claude/skills/decompose/SKILL.md` 的流程處理（等同 `/decompose <票號>`）。
-- 沒有可處理的票 → 回報「目前沒有可處理的票」。
+- 1-3 → process the ticket per `.claude/skills/ticket/SKILL.md` (same as `/ticket <ticket id>`).
+- 4 → process it per `.claude/skills/decompose/SKILL.md` (same as `/decompose <ticket id>`).
+- No ticket to process → report "No tickets to process right now".
 
-最後用一兩句話回報處理了哪張票與結果。
+Finish with one or two sentences on which ticket was processed and the result.
 
-## 搭配 /loop
+## With /loop
 
-`/loop 10m /next` 每 10 分鐘執行一次；`/loop /next` 由 Claude 自行決定間隔。處理一張票可能超過間隔時間，下一輪會在這一輪結束後才開始。
+`/loop 10m /next` runs every 10 minutes. `/loop /next` lets Claude choose the interval. Processing a ticket may take longer than the interval; the next round starts only after this one finishes.
