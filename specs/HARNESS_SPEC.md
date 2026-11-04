@@ -24,7 +24,7 @@
 
 | Component | What it is | Responsible for | Not responsible for |
 |---|---|---|---|
-| **Main session** (orchestrator) | The Claude Code session you open, running `/ticket`, `/next`, `/decompose` and `/retro` | Reading tickets, changing Linear state and labels, creating branches, **verifying** subagent results, pushing, opening PRs, waiting for CI, posting reviews, opening follow-up tickets, auto-merging per §5.1 | Writing product code, merging outside §5.1 |
+| **Main session** (orchestrator) | The Claude Code session you open, running `/ticket`, `/next`, `/decompose` and `/retro` | Reading tickets, changing Linear state and labels, creating branches, **verifying** subagent results, pushing, opening PRs, waiting for CI, posting reviews, opening follow-up tickets, auto-merging per §5.1 | Writing product code (`harness` tickets change protected paths only, §3.7), merging outside §5.1 |
 | **implementer** | `.claude/agents/implementer.md` | Implementing and writing tests on the branch, running `npm run verify`, committing | Pushing, PRs, Linear |
 | **reviewer** | `.claude/agents/reviewer.md` | Read-only review of whether the diff meets the acceptance criteria and test scenarios | Modifying anything |
 | **decomposer** | `.claude/agents/decomposer.md` | Read-only repo exploration and proposing sub-tickets | Creating tickets (the main session does that) |
@@ -50,6 +50,7 @@
 | `needs-human` | Stuck and needs a human; the flow skips this ticket | Main session |
 | `spec-needed` | Question ticket for an unclear spec | Main session |
 | `agent-proposed` | An idea or out-of-scope bug raised by an agent | Main session |
+| `harness` | Changes protected paths only (§5.1); runs through `/ticket` per §3.7 | Human or main session |
 
 (The v2 `agent:working` label is no longer used and can be deleted in Linear.)
 
@@ -141,6 +142,13 @@ Guardrails:
 - One open harness PR at a time, so an effect can be traced to its change.
 - A human always merges harness changes.
 
+### 3.7 Harness tickets
+A ticket with the `harness` label changes protected paths (§5.1) only. `implementer` may not edit those, so `/ticket` runs it with one difference: the main session makes the changes, including rework. `reviewer` still reviews it.
+
+- Guard: before pushing, the main session checks the diff. A file outside the protected paths stops the run and hands off to a human, so the main session never writes product code.
+- Merging: the PR changes a protected path, so a human merges it.
+- A change that needs both protected paths and other files is split into two tickets.
+
 ---
 
 ## 4. Subagents
@@ -225,6 +233,7 @@ There is no separate state file. Resuming decides from the actual state (`/ticke
 Volume limits and identification:
 - Before creating, search for similar tickets with `list_issues`. If one exists, add a comment instead. Open at most 3 per run.
 - Tickets opened by an agent start with `<!-- harness:created-by-agent source=YOU-n -->` and always carry `agent-proposed` or `spec-needed`.
+- A new ticket whose scope is protected paths only also gets `harness`.
 - `agent-proposed` / `spec-needed` tickets are not processed automatically. They enter the flow after you remove the label.
 
 ---

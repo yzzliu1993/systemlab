@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # /ticket $ARGUMENTS
 
-You are the orchestrator. You advance the flow and **verify** results. Code goes to the `implementer` subagent and review goes to the `reviewer` subagent. A subagent saying "done" does not count: confirm it yourself (verify passes, CI is green) before advancing state. See `specs/HARNESS_SPEC.md` for the full spec.
+You are the orchestrator. You advance the flow and **verify** results. Code goes to the `implementer` subagent, except on a `harness` ticket (step 3), and review goes to the `reviewer` subagent. A subagent saying "done" does not count: confirm it yourself (verify passes, CI is green) before advancing state. See `specs/HARNESS_SPEC.md` for the full spec.
 
 Ticket id: `$ARGUMENTS` (called `<ID>` below; `<id>` is the lowercase form, for example `you-20`). Linear team: `Youzhuliu`. Repo: `yzzliu1993/systemlab`.
 
@@ -85,7 +85,9 @@ If the PR is open, get onto its branch before you continue, whichever row applie
 
 ## 3. Implement
 
-Call the `implementer` subagent with the Agent tool. Include:
+**`harness` label:** do not call `implementer`, because it may not edit protected paths (listed in step 8). Make the changes yourself, from the ticket, the "Must fix" list or the CI failure log, and commit them with the convention in `CLAUDE.md`. Wherever this skill gives `implementer` a task, including a redo in step 4 or a merge in step 7, do that task yourself. Write the `summary`, `tests` and `assumptions` for the PR body yourself. If the spec is too unclear to continue, jump to "Hand off to a human", as `implementer` would return `blocked`. Otherwise continue with 4.
+
+For any other ticket, call the `implementer` subagent with the Agent tool. Include:
 - The ticket id, branch name and full ticket body.
 - For rework: the "Must fix" list or the CI failure log (key excerpts).
 
@@ -97,13 +99,14 @@ Read the json at the end of its reply:
 
 1. Run `npm run verify` yourself (do not trust the subagent's report). On failure, give the error output to the implementer to redo; this counts as one failure.
 2. Confirm there are new commits (`git log origin/main..HEAD --oneline` is not empty) and `git status --porcelain` is clean.
-3. `git push -u origin <branch>` (`--force` is **forbidden**).
-4. If there is no PR yet, create one:
+3. **`harness` label:** run `git diff --no-renames --name-only origin/main...HEAD`. If any file is outside the protected paths in step 8, do not push. Jump to "Hand off to a human" and name those files.
+4. `git push -u origin <branch>` (`--force` is **forbidden**).
+5. If there is no PR yet, create one:
    ```bash
    gh pr create --base main --head <branch> --title "[<ID>] <ticket title>" --body-file <temp file>
    ```
    The body contains: the Linear ticket link, the acceptance criteria checklist, the implementer's `summary`, the test scenario mapping (`tests`), and `## Assumptions` (`assumptions`, or "None"), ending with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Keep the temp file in the scratchpad or system temp directory, not in the repo.
-5. `mcp__linear__save_issue` with `state: "In Review"` (Linear's PR automation does this too; set it again to be sure).
+6. `mcp__linear__save_issue` with `state: "In Review"` (Linear's PR automation does this too; set it again to be sure).
 
 ## 5. Wait for CI
 
@@ -183,7 +186,7 @@ Post the reviewer's markdown to the PR without its `## Verdict` section (`gh pr 
 
 For the implementer's and reviewer's `proposals`, and any `assumptions` that need human confirmation, open tickets per `specs/HARNESS_SPEC.md` §8:
 - First search for similar tickets with `mcp__linear__list_issues` (`query`). If one exists, add a comment instead.
-- Start the new ticket body with `<!-- harness:created-by-agent source=<ID> -->` and add the `agent-proposed` or `spec-needed` label.
+- Start the new ticket body with `<!-- harness:created-by-agent source=<ID> -->` and add the `agent-proposed` or `spec-needed` label. If its scope is protected paths only, add `harness` too.
 - Open at most 3 per run.
 
 ## Progress comment
@@ -228,5 +231,5 @@ Record facts, not guesses. Rejected reviews and failures already in the progress
 ## Forbidden
 
 - `gh pr merge` anywhere except step 8, `gh pr merge --admin`, `git push --force`, pushing directly to `main`, `git reset --hard`.
-- Writing or modifying product code yourself (that goes to the implementer).
+- Writing or modifying product code yourself (that goes to the implementer). On a `harness` ticket you change protected paths only.
 - Changing ticket state outside the spec.
