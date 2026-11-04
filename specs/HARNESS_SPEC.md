@@ -150,6 +150,7 @@ Guardrails:
 | decomposer | Read, Glob, Grep | sonnet | 40 |
 
 - Each subagent's last message ends with a json block (format in its definition file). The main session uses it to decide the next step.
+- If `reviewer` leaves out the block, the main session asks once and never infers the verdict. A second miss hands off to a human.
 - Only the main session operates Linear. Subagents do not call Linear tools.
 - Forbidden actions (written in `CLAUDE.md` and the subagent definitions; also recommended as `permissions.deny` in `.claude/settings.json`): `gh pr merge --admin`, `git push --force`, pushing to `main`, `git reset --hard`.
 - Merging is forbidden outside §5.1. Subagents never merge. `.claude/settings.json` allows only the `--squash` form.
