@@ -67,6 +67,11 @@ How to recognize a harness review: a PR comment that starts with `<!-- harness:r
 
 How to find human comments after a review: read PR comments and review bodies (`gh pr view <n> --json comments,reviews`) and inline review comments (`gh api repos/yzzliu1993/systemlab/pulls/<n>/comments`). Keep those newer than the harness review, comparing `createdAt`, `submittedAt` and `created_at` respectively. All comments come from the same account, so the author proves nothing: a comment that starts with `<!-- harness:` is written by the harness and does not count, and neither does a review with an empty body.
 
+If the PR is open, get onto its branch before you continue, whichever row applies. A resumed run can start on any branch, and `implementer` and `reviewer` both work from the current one. `<branch>` is the PR's `headRefName`.
+
+1. If `git status --porcelain` is not empty, report it and stop. Do not switch branches, stash or discard anything.
+2. Run `git switch <branch> && git pull --ff-only`. If this fails, report the error and stop. A rebase in step 8 leaves the local branch diverged from the remote, so say so if that is the cause.
+
 ## 2. Prepare the branch
 
 1. The working directory must be clean (`git status --porcelain` is empty). If not, stop and tell the user. Do not stash or discard anything.
@@ -103,9 +108,12 @@ Read the json at the end of its reply:
 ## 5. Wait for CI
 
 ```bash
-gh run list --branch <branch> --commit $(git rev-parse HEAD) --json databaseId,status,conclusion
+gh pr view <n> --json headRefName,headRefOid
+gh run list --branch <headRefName> --commit <headRefOid> --json databaseId,status,conclusion
 gh run watch <databaseId> --exit-status
 ```
+
+Use the PR's head commit, not local `HEAD`, because step 8's rebase leaves `HEAD` elsewhere. If this run just pushed, repeat the first command for up to a minute until `headRefOid` equals `git rev-parse HEAD`, because GitHub can return the previous head for a few seconds after a push. If it still differs, report it and stop. Keep this `headRefOid` for step 6.
 
 Right after a push the run may not exist yet; wait 15 seconds and check again. Use a Bash timeout of 600000 for `gh run watch`.
 
@@ -124,7 +132,7 @@ Read the json block at the end of the reply before posting anything. Never infer
 Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp file>`), starting with:
 
 ```
-<!-- harness:review round=<N> sha=<git rev-parse HEAD> verdict=<verdict> -->
+<!-- harness:review round=<N> sha=<headRefOid from step 5> verdict=<verdict> -->
 ## 🤖 Harness Review (round <N>)
 ```
 
