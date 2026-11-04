@@ -10,9 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "arch:check": "depcruise --config .dependency-cruiser.cjs src harness/src",
-    "harness:verify": "npm run lint && tsc -b && npm run arch:check && npm run test",
-    "harness": "tsx harness/src/index.ts"
+    "arch:check": "depcruise --config .dependency-cruiser.cjs src",
+    "verify": "npm run lint && tsc -b && npm run arch:check && npm run test"
   },
   "dependencies": {
     "@xyflow/react": "^12.12.0",
@@ -31,7 +30,6 @@
     "zustand": "^5.0.16"
   },
   "devDependencies": {
-    "@linear/sdk": "^101.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.9.1",
@@ -47,7 +45,6 @@
     "msw": "^2.15.0",
     "oxlint": "^1.89.0",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.15",
     "typescript": "~6.0",
     "vite": "^8.3.5",
     "vitest": "^4.1.12"

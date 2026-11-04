@@ -1,6 +1,6 @@
 # systemlab
 
-React 19 + TypeScript + Vite 單頁應用。開發流程由 harness 自動化，規格見 `specs/HARNESS_SPEC.md`。
+React 19 + TypeScript + Vite 單頁應用。開發流程由 Claude Code 依 Linear 票推進（`/ticket`、`/next`、`/decompose`），規格見 `specs/HARNESS_SPEC.md`。
 
 <!-- TODO(人填寫): 一到兩句說明這個產品是什麼、給誰用。 -->
 
@@ -8,11 +8,10 @@ React 19 + TypeScript + Vite 單頁應用。開發流程由 harness 自動化，
 
 | 指令 | 用途 |
 |---|---|
-| `npm run harness:verify` | **提交前必跑**：lint → 型別檢查 → 架構檢查 → 測試，與 CI 相同 |
+| `npm run verify` | **提交前必跑**：lint → 型別檢查 → 架構檢查 → 測試，與 CI 相同 |
 | `npm run test` | 執行一次全部測試 |
 | `npx vitest run <路徑>` | 只跑指定的測試檔 |
 | `npm run dev` | 本機開發伺服器 |
-| `npm run harness -- run <票號>` | （人使用）讓 harness 處理一張 Todo 票，agent 不可執行 |
 
 ## 架構分層
 
@@ -63,12 +62,13 @@ src/
 - Commit：`<type>(<票號>): <說明>`，例：`feat(YOU-12): add roadmap DAG layout`。
 - PR 標題：`[YOU-12] <票標題>`；merge 方式為 squash merge。
 
-## Agent 規則
+## Harness 流程規則
 
-以 harness agent 身分執行時（細節見 `specs/HARNESS_SPEC.md` §4、§8）：
+完整流程見 `specs/HARNESS_SPEC.md` 與 `.claude/skills/`、`.claude/agents/`。
 
-- **禁止**：修改 Linear 票的狀態、merge PR、`git push --force`、直接改 `main`。
-- **禁止修改**：`.github/workflows/`、`harness/`、`CLAUDE.md`、`specs/`、`package.json` 的依賴、各種設定檔（`tsconfig*`、`vite.config.ts`、`vitest.config.ts`、`.oxlintrc.json`、`.dependency-cruiser.cjs`）。需要時回傳 `blocked` 並說明原因。
-- 只做票上明確寫到的範圍。規格不明確時採用最保守的做法（§8），並在 PR 內文的「假設」段落列出。
-- 開新票時，內文開頭加上 `<!-- harness:created-by-agent source=<來源票號> -->`。
-- push 前 `npm run harness:verify` 必須通過。
+- **主 session**（執行 `/ticket`、`/next`、`/decompose` 時）負責 Linear 狀態、push、PR；產品程式碼交給 `implementer` subagent 寫，審查交給 `reviewer`。
+- **任何時候都禁止**：merge PR、`git push --force`、直接 push 到 `main`、`git reset --hard`。
+- **subagent 禁止**：改 Linear、push；修改 `.github/workflows/`、`.claude/`、`CLAUDE.md`、`specs/`、`package.json` 的依賴、各種設定檔（`tsconfig*`、`vite.config.ts`、`vitest.config.ts`、`.oxlintrc.json`、`.dependency-cruiser.cjs`）。需要時回傳 `blocked` 並說明原因。
+- 只做票上明確寫到的範圍。規格不明確時採用最保守的做法（spec §8），並在 PR 內文的「假設」段落列出。
+- agent 開的新票，內文開頭加上 `<!-- harness:created-by-agent source=<來源票號> -->`，並帶 `agent-proposed` 或 `spec-needed` 標籤。
+- push 前 `npm run verify` 必須通過。
