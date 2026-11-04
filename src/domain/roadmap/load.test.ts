@@ -22,7 +22,7 @@ function catchError(fn: () => unknown): unknown {
 }
 
 describe('loadRoadmap', () => {
-  it('T1: 正常流程：菱形', () => {
+  it('T1: happy path: diamond', () => {
     const result = loadRoadmap(
       roadmap([node('a'), node('b', ['a']), node('c', ['a']), node('d', ['b', 'c'])]),
     );
@@ -36,18 +36,18 @@ describe('loadRoadmap', () => {
     expect(result.levels).toEqual([['a'], ['b', 'c'], ['d']]);
   });
 
-  it('T2: 邊界值：單一節點', () => {
+  it('T2: boundary: single node', () => {
     const result = loadRoadmap(roadmap([node('a')]));
     expect(result.levels).toEqual([['a']]);
     expect(result.edges).toEqual([]);
   });
 
-  it('T3: 邊界值：重複前置', () => {
+  it('T3: boundary: duplicate prerequisites', () => {
     const parsed = parseRoadmap(roadmap([node('a'), node('b', ['a', 'a'])]));
     expect(toGraph(parsed).edges).toEqual([['a', 'b']]);
   });
 
-  it('T4: 範例檔', () => {
+  it('T4: sample file', () => {
     const result = loadRoadmap(sample);
     const ids = sample.nodes.map((n) => n.id);
     const flat = result.levels.flat();
@@ -55,7 +55,7 @@ describe('loadRoadmap', () => {
     expect(flat).toHaveLength(ids.length);
   });
 
-  it('T5: 錯誤處理：格式錯誤', () => {
+  it('T5: error handling: malformed format', () => {
     const bad = roadmap([{ id: 'a', summary: 's', prerequisites: [] }]);
     const error = catchError(() => loadRoadmap(bad));
     expect(error).toBeInstanceOf(RoadmapValidationError);
@@ -64,7 +64,7 @@ describe('loadRoadmap', () => {
     );
   });
 
-  it('T6: 錯誤處理：前置不存在', () => {
+  it('T6: error handling: missing prerequisite', () => {
     const error = catchError(() => loadRoadmap(roadmap([node('a'), node('b', ['zzz'])])));
     expect(error).toBeInstanceOf(RoadmapReferenceError);
     const ref = error as RoadmapReferenceError;
@@ -74,7 +74,7 @@ describe('loadRoadmap', () => {
     expect(ref.message).toBe('Node "b" references unknown prerequisite "zzz"');
   });
 
-  it('T7: 錯誤處理：循環', () => {
+  it('T7: error handling: cycle', () => {
     const error = catchError(() => loadRoadmap(roadmap([node('a', ['b']), node('b', ['a'])])));
     expect(error).toBeInstanceOf(CycleError);
     const message = (error as CycleError).message;
@@ -83,11 +83,11 @@ describe('loadRoadmap', () => {
     expect(message).toContain('b');
   });
 
-  it('T8: 錯誤處理：自我參照', () => {
+  it('T8: error handling: self reference', () => {
     expect(() => loadRoadmap(roadmap([node('a', ['a'])]))).toThrow(CycleError);
   });
 
-  it('T9: 錯誤處理：多個不存在', () => {
+  it('T9: error handling: multiple missing', () => {
     const error = catchError(() => loadRoadmap(roadmap([node('a', ['x']), node('b', ['y'])])));
     expect(error).toBeInstanceOf(RoadmapReferenceError);
     expect((error as RoadmapReferenceError).nodeId).toBe('a');
