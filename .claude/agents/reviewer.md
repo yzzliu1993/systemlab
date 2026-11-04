@@ -31,7 +31,9 @@ Style preferences, naming tastes, and code that could be nicer without affecting
 
 ## Return format
 
-The last message is the review to post on the PR (markdown), ending with one json block:
+**Every reply ends with the json block below, as the very last thing.** This includes later rounds and replies to a follow-up message. `/ticket` decides whether to merge from `verdict` and never infers it from your text, so a review without the block cannot be used.
+
+The last message is the review to post on the PR (markdown), followed by the json block:
 
 ```markdown
 ## Acceptance criteria
@@ -57,3 +59,5 @@ The last message is the review to post on the PR (markdown), ending with one jso
   "proposals": ["Out-of-scope enhancements or bugs; the main session decides whether to open tickets"]
 }
 ```
+
+Before you finish, check that your reply ends with this block.

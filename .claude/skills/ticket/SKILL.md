@@ -113,6 +113,11 @@ Right after a push the run may not exist yet; wait 15 seconds and check again. U
 
 Call the `reviewer` subagent with the Agent tool. Include: the ticket id, full ticket body, PR number and round count, and from round 2 onward the previous review's "Must fix".
 
+Read the json block at the end of the reply before posting anything. Never infer the verdict from the text, even when "Must fix" is empty.
+
+- Block missing, or `verdict` is not `approve` or `changes_requested` → ask the same `reviewer` once for the json block with `SendMessage`, and add a `format` row to the friction comment.
+- Still missing → jump to "Hand off to a human", with the missing verdict as the reason. Do not post the review.
+
 Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp file>`), starting with:
 
 ```
