@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "mcp__linear__get_issue", "mcp__linear__list_issues", "mcp__linear__list_comments",
+      "mcp__linear__list_issue_labels", "mcp__linear__save_issue", "mcp__linear__save_comment",
+      "Bash(npm run verify)", "Bash(npm run lint)", "Bash(npm run test)", "Bash(npx vitest run *)",
+      "Bash(git status)", "Bash(git status *)", "Bash(git diff)", "Bash(git diff *)",
+      "Bash(git log *)", "Bash(git show *)", "Bash(git fetch *)", "Bash(git ls-remote *)",
+      "Bash(git rev-parse *)", "Bash(git branch *)", "Bash(git switch *)", "Bash(git pull --ff-only)",
+      "Bash(git add *)", "Bash(git commit *)", "Bash(git merge origin/main)",
+      "Bash(git push -u origin *)", "Bash(git push origin *)",
+      "Bash(gh pr create *)", "Bash(gh pr list *)", "Bash(gh pr view *)", "Bash(gh pr comment *)",
+      "Bash(gh pr update-branch *)", "Bash(gh pr checks *)",
+      "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh run watch *)", "Bash(gh run rerun *)",
+      "Bash(gh api repos/yzzliu1993/systemlab/pulls/*)"
+    ],
+    "deny": [
+      "Bash(gh pr merge *)",
+      "Bash(git push --force *)", "Bash(git push -f *)", "Bash(git push --force-with-lease *)",
+      "Bash(git push * --force)", "Bash(git push * --force-with-lease)", "Bash(git push * -f)",
+      "Bash(git push origin main)", "Bash(git push origin HEAD:main)", "Bash(git push -u origin main)",
+      "Bash(git reset --hard *)",
+      "mcp__linear__delete_comment"
+    ]
+  }
+}
