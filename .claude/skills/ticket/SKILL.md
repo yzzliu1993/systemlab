@@ -149,7 +149,7 @@ Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp fil
    - No changed file is a protected path. Get changed files from `gh pr diff <n> --name-only`, and the old path of any renamed file from `gh api repos/yzzliu1993/systemlab/pulls/<n>/files --paginate --jq '.[].previous_filename // empty'`.
 
    Protected paths: anything under `.claude/`, `.github/` or `specs/`, plus `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json` and `.dependency-cruiser.cjs`.
-3. All conditions hold → `gh pr merge <n> --squash`. Never use `--admin`. On success, update the progress comment and go to 9. On failure, go to 4 with the error as the reason.
+3. All conditions hold → `gh pr merge <n> --subject "<type>(<ID>): <description> (#<n>)" --squash`. `<type>` is the type in the PR's branch name, and `<description>` is a short plain English phrase with no quotes, backticks or `$`. Keep `--squash` last so the command matches the allow rule in `.claude/settings.json`. Never use `--admin`. On success, update the progress comment and go to 9. On failure, go to 4 with the error as the reason.
 4. Otherwise wait for a human:
    1. `mcp__linear__save_issue`: `state: "In Review"`, `addLabels: ["awaiting-merge"]`, `assignee: "me"`.
    2. Linear comment: "✅ Review passed and CI is green. Not auto-merged: <reason, naming each unmet condition or protected path>. Waiting for you to merge: <PR link>. If you disagree, comment on the PR, remove `awaiting-merge`, then run `/ticket <ID>`."
