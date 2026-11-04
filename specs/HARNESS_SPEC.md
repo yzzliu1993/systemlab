@@ -95,7 +95,7 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
 ### 3.1 Commands
 | Command | Purpose |
 |---|---|
-| `/ticket YOU-n` | Take one ticket to awaiting-merge; rerunning resumes from the actual state |
+| `/ticket YOU-n` | Take one ticket to awaiting-merge; rerunning resumes from the actual state, and closes out the ticket once its PR is merged |
 | `/next` | Close out merged tickets, then pick one ticket per §3.3 |
 | `/decompose YOU-n` | Decompose one Backlog ticket |
 | `/loop 10m /next` | Run `/next` on a timer (works while the session is open) |
@@ -153,7 +153,7 @@ There is no separate state file. Resuming decides from the actual state (`/ticke
 
 | Source | Used for |
 |---|---|
-| Remote branch / PR | Whether the code and PR exist |
+| Remote branch / PR | Whether the code and PR exist (PRs are found by the `[YOU-n]` title prefix, because the remote branch is deleted after merge) |
 | `gh run` | CI result of the latest commit |
 | `<!-- harness:review round=N sha=… verdict=… -->` comments on the PR | Review round count, whether the latest commit was reviewed, the verdict |
 | Linear labels | `awaiting-merge`, `needs-human` |
