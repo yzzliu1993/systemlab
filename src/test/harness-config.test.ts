@@ -126,6 +126,16 @@ describe('harness config', () => {
     expect(checkSettings('settings.json', validSettings(fullDeny))).toEqual([]);
   });
 
+  it('T5: removing only the plain --force rules while keeping lease rules is reported', () => {
+    const deny = [
+      ...fullDeny.filter((r) => !/--force(?![-\w])/.test(r)),
+      'Bash(git push * --force-with-lease)',
+    ];
+    const problems = checkSettings('settings.json', validSettings(deny));
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('git push --force rule');
+  });
+
   it('T6: protected path list missing package.json names file and path', () => {
     const good = pathsLine(PATHS);
     const bad = pathsLine(PATHS.filter((p) => p !== 'package.json'));

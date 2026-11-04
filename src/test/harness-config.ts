@@ -48,7 +48,7 @@ export function checkSettings(file: string, content: string): string[] {
   const required: [string, (r: string) => boolean][] = [
     [
       'git push --force rule',
-      (r) => r.includes('git push') && r.includes('--force'),
+      (r) => r.includes('git push') && /--force(?![-\w])/.test(r),
     ],
     [
       'git push --force-with-lease rule',
