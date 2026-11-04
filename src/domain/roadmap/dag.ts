@@ -6,7 +6,8 @@ export class CycleError extends Error {
 }
 
 /**
- * Topological sort: for every edge, from comes before to; nodes with no dependency relation keep their original order in nodes.
+ * Topological sort: for every edge, from comes before to; nodes with no dependency relation
+ * keep their original order in nodes.
  */
 export function topologicalSort(
   nodes: string[],
@@ -58,7 +59,8 @@ function findCycle(
   done: Set<string>,
   predecessors: Map<string, Set<string>>,
 ): string[] {
-  // Every remaining node has at least one remaining predecessor; walking along predecessors must loop back to a visited node.
+  // Every remaining node has at least one remaining predecessor; walking along predecessors
+  // must loop back to a visited node.
   let current = unique.find((n) => !done.has(n)) as string;
   const path: string[] = [];
   const seen = new Map<string, number>();
@@ -73,8 +75,9 @@ function findCycle(
 }
 
 /**
- * Node leveling: nodes with no prerequisites are at level 0; others are the max level of all prerequisites + 1.
- * Within a level, the original order in nodes is kept. Cycle and unknown-node errors are the same as topologicalSort.
+ * Node leveling: nodes with no prerequisites are at level 0; others are the max level of all
+ * prerequisites + 1. Within a level, the original order in nodes is kept. Cycle and unknown-node
+ * errors are the same as topologicalSort.
  */
 export function computeLevels(
   nodes: string[],
@@ -132,7 +135,8 @@ function reachable(
 }
 
 /**
- * Returns all direct and indirect prerequisites of nodeId (excluding itself), in topologicalSort order.
+ * Returns all direct and indirect prerequisites of nodeId (excluding itself), in topologicalSort
+ * order.
  * Throws Error if nodeId is not in nodes; throws CycleError on a cycle.
  */
 export function getPrerequisites(
@@ -144,7 +148,8 @@ export function getPrerequisites(
 }
 
 /**
- * Returns all direct and indirect dependents of nodeId (excluding itself), in topologicalSort order.
+ * Returns all direct and indirect dependents of nodeId (excluding itself), in topologicalSort
+ * order.
  * Throws Error if nodeId is not in nodes; throws CycleError on a cycle.
  */
 export function getDependents(
