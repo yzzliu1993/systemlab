@@ -154,6 +154,7 @@ Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp fil
    - CI is green on the PR head commit (`gh pr view <n> --json headRefOid,statusCheckRollup`).
    - The latest harness review has `verdict=approve` and its `sha` equals `headRefOid`. A rebase in step 1 changes the head commit, so the review no longer matches and the PR goes to a human.
    - `mergeStateStatus` is `CLEAN`. Any other value, including `UNKNOWN`, does not qualify.
+   - `isDraft` is `false` (`gh pr view <n> --json isDraft`). A draft can report `CLEAN`, so that check does not cover it. If `isDraft` cannot be read, this condition is not met, and the comment in 4 gives the error.
    - No changed file is a protected path. Get changed files from `gh pr diff <n> --name-only`, and the old path of any renamed file from `gh api repos/yzzliu1993/systemlab/pulls/<n>/files --paginate --jq '.[].previous_filename // empty'`.
 
    Protected paths: anything under `.claude/`, `.github/` or `specs/`, plus `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json` and `.dependency-cruiser.cjs`.
