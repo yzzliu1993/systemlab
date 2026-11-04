@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # /ticket $ARGUMENTS
 
-You are the orchestrator. You advance the flow and **verify** results. Code goes to the `implementer` subagent and review goes to the `reviewer` subagent. A subagent saying "done" does not count: confirm it yourself (verify passes, CI is green) before advancing state. See `specs/HARNESS_SPEC.md` for the full spec.
+You are the orchestrator. You advance the flow and **verify** results. Code goes to the `implementer` subagent, except on a `harness` ticket (step 3), and review goes to the `reviewer` subagent. A subagent saying "done" does not count: confirm it yourself (verify passes, CI is green) before advancing state. See `specs/HARNESS_SPEC.md` for the full spec.
 
 Ticket id: `$ARGUMENTS` (called `<ID>` below; `<id>` is the lowercase form, for example `you-20`). Linear team: `Youzhuliu`. Repo: `yzzliu1993/systemlab`.
 
@@ -85,7 +85,7 @@ If the PR is open, get onto its branch before you continue, whichever row applie
 
 ## 3. Implement
 
-**`harness` label:** do not call `implementer`, because it may not edit protected paths (listed in step 8). Make the changes yourself, from the ticket, the "Must fix" list or the CI failure log, and commit them with the convention in `CLAUDE.md`. Wherever this skill gives `implementer` a task, including a redo in step 4 or a merge in step 7, do that task yourself. Then continue with 4.
+**`harness` label:** do not call `implementer`, because it may not edit protected paths (listed in step 8). Make the changes yourself, from the ticket, the "Must fix" list or the CI failure log, and commit them with the convention in `CLAUDE.md`. Wherever this skill gives `implementer` a task, including a redo in step 4 or a merge in step 7, do that task yourself. Write the `summary`, `tests` and `assumptions` for the PR body yourself. If the spec is too unclear to continue, jump to "Hand off to a human", as `implementer` would return `blocked`. Otherwise continue with 4.
 
 For any other ticket, call the `implementer` subagent with the Agent tool. Include:
 - The ticket id, branch name and full ticket body.
