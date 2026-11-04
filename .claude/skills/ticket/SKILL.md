@@ -60,9 +60,12 @@ Find PRs by title, because the `head:` search qualifier matches only a full bran
 | PR open, CI failed on the latest commit | 5 failure handling |
 | PR open, no harness review on the latest commit | 5 → 6 |
 | PR open, harness review on the latest commit is `changes_requested` | 7 (rework) |
-| PR open, harness review on the latest commit is `approve`, but no `awaiting-merge` | **Human rejection**: read the PR comments and review comments a human left after that review (`gh pr view <n> --comments`, `gh api repos/yzzliu1993/systemlab/pulls/<n>/comments`), treat them as "Must fix" → 7 |
+| PR open, harness review on the latest commit is `approve`, no `awaiting-merge`, no human comment after that review | **Interrupted run**: the last run stopped before step 8 → 8 |
+| PR open, harness review on the latest commit is `approve`, no `awaiting-merge`, human comment after that review | **Human rejection**: treat those human comments as "Must fix" → 7 |
 
 How to recognize a harness review: a PR comment that starts with `<!-- harness:review round=<N> sha=<commit> verdict=<approve|changes_requested> -->` (`gh pr view <n> --json comments`). The round count is the number of existing harness reviews.
+
+How to find human comments after a review: read PR comments and review bodies (`gh pr view <n> --json comments,reviews`) and inline review comments (`gh api repos/yzzliu1993/systemlab/pulls/<n>/comments`). Keep those newer than the harness review, comparing `createdAt`, `submittedAt` and `created_at` respectively. All comments come from the same account, so the author proves nothing: a comment that starts with `<!-- harness:` is written by the harness and does not count, and neither does a review with an empty body.
 
 ## 2. Prepare the branch
 
