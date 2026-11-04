@@ -191,6 +191,7 @@ There is no separate state file. Resuming decides from the actual state (`/ticke
 | Linear labels | `awaiting-merge`, `needs-human` |
 | `<!-- harness:progress -->` comment on Linear | Human-readable progress and failure history (the basis for the circuit breaker count) |
 
+- Stale skill: `/ticket` compares its skill file with `origin/main` before anything else. If they differ, it updates `main` and follows the new version, or stops if it cannot update.
 - Local record: Claude Code conversation history (`claude --resume` returns to an earlier session).
 - Exhausted quota: the session stops. Once quota returns, rerun the same command to resume.
 - The implementer commits but does not push, so committed progress stays on the local branch after an interruption. Uncommitted changes stay in the working directory and must be dealt with before rerunning (the working directory must be clean).
