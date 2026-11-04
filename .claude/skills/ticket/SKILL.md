@@ -1,29 +1,29 @@
 ---
 name: ticket
-description: 處理一張 Linear 票：讀票 → 開 branch → implementer 實作 → 本地驗證 → push 開 PR → In Review → 等 CI → reviewer 審查 → 等人 merge。中斷後重跑會從實際狀態接續。
-argument-hint: <票號，例如 YOU-20>
+description: Process one Linear ticket, from reading it to waiting for merge. Read the ticket → create a branch → implementer implements → verify locally → push and open a PR → In Review → wait for CI → reviewer reviews → wait for a human to merge. Rerunning after an interruption resumes from the actual state.
+argument-hint: <ticket id, for example YOU-20>
 disable-model-invocation: true
 ---
 
 # /ticket $ARGUMENTS
 
-你是 orchestrator，負責推進流程與**驗證**結果；寫程式交給 `implementer`、審查交給 `reviewer` subagent。subagent 說「完成」不算數，要你自己確認（verify 通過、CI 綠燈）才推進狀態。完整規格見 `specs/HARNESS_SPEC.md`。
+You are the orchestrator. You advance the flow and **verify** results. Code goes to the `implementer` subagent and review goes to the `reviewer` subagent. A subagent saying "done" does not count: confirm it yourself (verify passes, CI is green) before advancing state. See `specs/HARNESS_SPEC.md` for the full spec.
 
-票號：`$ARGUMENTS`（以下稱 `<ID>`，`<id>` 為小寫，例如 `you-20`）。Linear team：`Youzhuliu`；repo：`yzzliu1993/systemlab`。
+Ticket id: `$ARGUMENTS` (called `<ID>` below; `<id>` is the lowercase form, for example `you-20`). Linear team: `Youzhuliu`. Repo: `yzzliu1993/systemlab`.
 
-## 0. 讀票與檢查
+## 0. Read and check the ticket
 
-1. `mcp__linear__get_issue`（`includeRelations: true`）取得票。
-2. 下列情況**停止**，說明原因，不做任何變更：
-   - 有 `needs-human`、`spec-needed`、`agent-proposed`、`draft` 標籤。
-   - 狀態是 Backlog（提示改用 `/decompose`）、Done、Canceled。
-   - 有 blocked-by 的票還沒 Done。
-   - 狀態是 In Review 且有 `awaiting-merge`（已在等人 merge）。
-3. 狀態是 Todo 時檢查 Definition of Ready：內文要有 `## 目標`、`## 範圍`、`## 驗收條件`、`## 測試情境`（表格至少一列 `T<數字>`）。缺少時：加 `needs-human` 標籤、指派給 `me`、留言列出缺少的段落，然後停止。
+1. Get the ticket with `mcp__linear__get_issue` (`includeRelations: true`).
+2. **Stop** in the cases below, explain why, and change nothing:
+   - It has a `needs-human`, `spec-needed`, `agent-proposed` or `draft` label.
+   - Its state is Backlog (suggest `/decompose` instead), Done or Canceled.
+   - A blocked-by ticket is not Done.
+   - Its state is In Review with `awaiting-merge` (already waiting for a human to merge).
+3. When the state is Todo, check the Definition of Ready: the body must have `## Goal`, `## Scope`, `## Acceptance criteria` and `## Test scenarios` (with at least one `T<number>` table row). If any is missing: add the `needs-human` label, assign to `me`, comment with the missing sections, then stop.
 
-## 1. 判斷從哪裡接續
+## 1. Decide where to resume
 
-依實際狀態決定，不依賴記憶：
+Decide from the actual state, not from memory:
 
 ```bash
 git fetch origin --prune
@@ -31,130 +31,130 @@ git ls-remote --heads origin "*/<id>/*"
 gh pr list --state all --search "head:<id>" --json number,state,headRefName,url,headRefOid
 ```
 
-| 實際狀態 | 從哪一步開始 |
+| Actual state | Start from |
 |---|---|
-| 沒有遠端 branch | 2（新 branch） |
-| 有 branch、沒有 PR | 2（切到既有 branch）→ 3 |
-| PR 已 merged | 9（收尾） |
-| PR 開著，最新 commit 的 CI 失敗 | 5 失敗處理 |
-| PR 開著，最新 commit 尚無 harness review | 5 → 6 |
-| PR 開著，harness review 對最新 commit 是 `changes_requested` | 7（重工） |
-| PR 開著，harness review 對最新 commit 是 `approve`，但沒有 `awaiting-merge` | **人工退件**：讀取該 review 之後人留的 PR 留言與 review comment（`gh pr view <n> --comments`、`gh api repos/yzzliu1993/systemlab/pulls/<n>/comments`），當作「必須修正」→ 7 |
+| No remote branch | 2 (new branch) |
+| Branch exists, no PR | 2 (switch to the existing branch) → 3 |
+| PR merged | 9 (close out) |
+| PR open, CI failed on the latest commit | 5 failure handling |
+| PR open, no harness review on the latest commit | 5 → 6 |
+| PR open, harness review on the latest commit is `changes_requested` | 7 (rework) |
+| PR open, harness review on the latest commit is `approve`, but no `awaiting-merge` | **Human rejection**: read the PR comments and review comments a human left after that review (`gh pr view <n> --comments`, `gh api repos/yzzliu1993/systemlab/pulls/<n>/comments`), treat them as "Must fix" → 7 |
 
-harness review 的辨識方式：PR 留言開頭為 `<!-- harness:review round=<N> sha=<commit> verdict=<approve|changes_requested> -->`（`gh pr view <n> --json comments`）。round 數 = 已有的 harness review 數。
+How to recognize a harness review: a PR comment that starts with `<!-- harness:review round=<N> sha=<commit> verdict=<approve|changes_requested> -->` (`gh pr view <n> --json comments`). The round count is the number of existing harness reviews.
 
-## 2. 準備 branch
+## 2. Prepare the branch
 
-1. 工作目錄必須乾淨（`git status --porcelain` 為空）；不乾淨就停止並告訴使用者，不要 stash 或丟棄。
-2. 新 branch：`<type>/<id>/<slug>`。`type` 依標籤：Bug→`fix`、Feature→`feat`、Improvement→`refactor`，其他預設 `feat`；`slug` 為票標題的英文短語（小寫、連字號、最多 5 個字）。
+1. The working directory must be clean (`git status --porcelain` is empty). If not, stop and tell the user. Do not stash or discard anything.
+2. New branch: `<type>/<id>/<slug>`. `type` comes from the labels: Bug→`fix`, Feature→`feat`, Improvement→`refactor`, otherwise `feat`. `slug` is an English phrase from the ticket title (lowercase, hyphenated, at most 5 words).
    ```bash
    git switch -c <branch> origin/main
    ```
-   既有 branch：`git switch <branch> && git pull --ff-only`。
-3. 票若在 Todo：`mcp__linear__save_issue` 設 `state: "In Progress"`、`assignee: "me"`。
-4. 更新進度留言（見「進度留言」）。
+   Existing branch: `git switch <branch> && git pull --ff-only`.
+3. If the ticket is in Todo: `mcp__linear__save_issue` with `state: "In Progress"` and `assignee: "me"`.
+4. Update the progress comment (see "Progress comment").
 
-## 3. 實作
+## 3. Implement
 
-用 Agent 工具呼叫 `implementer` subagent，交辦內容包含：
-- 票號、branch 名稱、票的完整內文。
-- 重工時：「必須修正」清單或 CI 失敗 log（截取關鍵段落）。
+Call the `implementer` subagent with the Agent tool. Include:
+- The ticket id, branch name and full ticket body.
+- For rework: the "Must fix" list or the CI failure log (key excerpts).
 
-讀取回傳結尾的 json：
-- `blocked` → 跳到「交給人」，原因用 `blocked_reason`。
-- `done` → 繼續。保留 `summary`、`assumptions`、`tests`、`proposals`。
+Read the json at the end of its reply:
+- `blocked` → jump to "Hand off to a human", using `blocked_reason` as the reason.
+- `done` → continue. Keep `summary`, `assumptions`, `tests` and `proposals`.
 
-## 4. 驗證、push、開 PR
+## 4. Verify, push and open the PR
 
-1. 自己跑一次 `npm run verify`（不信任 subagent 的回報）。失敗 → 把錯誤輸出交給 implementer 重做，計為一次失敗。
-2. 確認有新的 commit（`git log origin/main..HEAD --oneline` 非空），且 `git status --porcelain` 乾淨。
-3. `git push -u origin <branch>`（**禁止** `--force`）。
-4. 還沒有 PR 時建立：
+1. Run `npm run verify` yourself (do not trust the subagent's report). On failure, give the error output to the implementer to redo; this counts as one failure.
+2. Confirm there are new commits (`git log origin/main..HEAD --oneline` is not empty) and `git status --porcelain` is clean.
+3. `git push -u origin <branch>` (`--force` is **forbidden**).
+4. If there is no PR yet, create one:
    ```bash
-   gh pr create --base main --head <branch> --title "[<ID>] <票標題>" --body-file <暫存檔>
+   gh pr create --base main --head <branch> --title "[<ID>] <ticket title>" --body-file <temp file>
    ```
-   內文包含：Linear 票連結、驗收條件 checklist、implementer 的 `summary`、測試情境對應（`tests`）、`## 假設`（`assumptions`，沒有就寫「無」），結尾加 `🤖 Generated with [Claude Code](https://claude.com/claude-code)`。暫存檔放在 scratchpad 或系統暫存目錄，不要放進 repo。
-5. `mcp__linear__save_issue` 設 `state: "In Review"`（Linear 的 PR 連動也會做，這裡再設一次確保正確）。
+   The body contains: the Linear ticket link, the acceptance criteria checklist, the implementer's `summary`, the test scenario mapping (`tests`), and `## Assumptions` (`assumptions`, or "None"), ending with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. Keep the temp file in the scratchpad or system temp directory, not in the repo.
+5. `mcp__linear__save_issue` with `state: "In Review"` (Linear's PR automation does this too; set it again to be sure).
 
-## 5. 等 CI
+## 5. Wait for CI
 
 ```bash
 gh run list --branch <branch> --commit $(git rev-parse HEAD) --json databaseId,status,conclusion
 gh run watch <databaseId> --exit-status
 ```
 
-剛 push 時 run 可能還沒出現，等 15 秒再查。`gh run watch` 用 Bash 的 timeout 600000。
+Right after a push the run may not exist yet; wait 15 seconds and check again. Use a Bash timeout of 600000 for `gh run watch`.
 
-- 綠燈 → 6。
-- 失敗 → `gh run view <id> --log-failed`，若錯誤看起來是 CI 不穩（網路、runner 問題）先 `gh run rerun <id>` 一次；否則票設回 `In Progress`，把 log 交給 implementer（回到 3），計為一次失敗。
+- Green → 6.
+- Failed → `gh run view <id> --log-failed`. If the error looks like CI flakiness (network, runner problems), run `gh run rerun <id>` once. Otherwise set the ticket back to `In Progress` and give the log to the implementer (back to 3); this counts as one failure.
 
 ## 6. Review
 
-用 Agent 工具呼叫 `reviewer` subagent，交辦內容：票號、票的完整內文、PR 編號、round 數，第 2 輪以後附上一輪 review 的「必須修正」。
+Call the `reviewer` subagent with the Agent tool. Include: the ticket id, full ticket body, PR number and round count, and from round 2 onward the previous review's "Must fix".
 
-把 reviewer 的 markdown 貼到 PR（`gh pr comment <n> --body-file <暫存檔>`），開頭第一行加上：
+Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp file>`), starting with:
 
 ```
 <!-- harness:review round=<N> sha=<git rev-parse HEAD> verdict=<verdict> -->
-## 🤖 Harness Review（第 <N> 輪）
+## 🤖 Harness Review (round <N>)
 ```
 
-- `approve` → 8。
-- `changes_requested` → 7。
+- `approve` → 8.
+- `changes_requested` → 7.
 
-## 7. 重工
+## 7. Rework
 
-1. 票設回 `In Progress`。
-2. 若 PR 落後 main 或有衝突，在交辦內容中要求 implementer 先 `git merge origin/main`。
-3. 把「必須修正」交給 implementer → 回到 3（之後 4 會 push 到同一個 PR）。
+1. Set the ticket back to `In Progress`.
+2. If the PR is behind main or has conflicts, tell the implementer to `git merge origin/main` first.
+3. Give the "Must fix" list to the implementer → back to 3 (step 4 then pushes to the same PR).
 
-## 8. 等待 merge
+## 8. Wait for merge
 
-1. 檢查 `gh pr view <n> --json mergeStateStatus`：
-   - `BEHIND` → `gh pr update-branch <n> --rebase`，接著 `git fetch origin` 並 `git switch --detach origin/main`（本機 branch 已和遠端分歧，不要 pull），等新的 head 通過 CI（5 的指令，以 `gh pr view <n> --json headRefOid` 取得 sha）。
-   - `DIRTY`（衝突）→ 7，要求 implementer `git merge origin/main` 解衝突。
-2. `mcp__linear__save_issue`：`state: "In Review"`、`addLabels: ["awaiting-merge"]`、`assignee: "me"`。
-3. Linear 留言：「✅ Review 通過、CI 綠燈，等待你 merge：<PR 連結>。不同意的話在 PR 留言並移除 `awaiting-merge`，再執行 `/ticket <ID>`。」
-4. `git switch main && git pull --ff-only`。
+1. Check `gh pr view <n> --json mergeStateStatus`:
+   - `BEHIND` → `gh pr update-branch <n> --rebase`, then `git fetch origin` and `git switch --detach origin/main` (the local branch has diverged from the remote, so do not pull), and wait for the new head to pass CI (the commands in 5, getting the sha from `gh pr view <n> --json headRefOid`).
+   - `DIRTY` (conflicts) → 7, telling the implementer to resolve them with `git merge origin/main`.
+2. `mcp__linear__save_issue`: `state: "In Review"`, `addLabels: ["awaiting-merge"]`, `assignee: "me"`.
+3. Linear comment: "✅ Review passed and CI is green. Waiting for you to merge: <PR link>. If you disagree, comment on the PR, remove `awaiting-merge`, then run `/ticket <ID>`."
+4. `git switch main && git pull --ff-only`.
 
-## 9. 收尾（PR 已 merged）
+## 9. Close out (PR merged)
 
-- 移除 `awaiting-merge`（`removeLabels`）；狀態不是 Done 就設為 Done。
-- 進度留言改寫為最終摘要（review 輪數、失敗次數）。
-- `git switch main && git pull --ff-only`，刪除本機 branch（`git branch -d <branch>`）。
+- Remove `awaiting-merge` (`removeLabels`). If the state is not Done, set it to Done.
+- Rewrite the progress comment as a final summary (review rounds, failure count).
+- `git switch main && git pull --ff-only`, then delete the local branch (`git branch -d <branch>`).
 
-## 熔斷與交給人
+## Circuit breaker and handing off to a human
 
-- 同一張票確定性失敗（含進度留言「失敗紀錄」中先前執行留下的次數；人移除 `needs-human` 後歸零）（verify 失敗、CI 失敗、implementer 回傳格式錯誤）累計 **3 次**，或 harness review 累計 **3 輪** `changes_requested` → 交給人。
-- 交給人：`addLabels: ["needs-human"]`、`assignee: "me"`、Linear 留言說明每次失敗的原因摘要與下一步建議；狀態不動；`git switch main`。
-- 人處理完移除 `needs-human` 後，重新執行 `/ticket <ID>` 會從實際狀態接續。
+- **3** cumulative deterministic failures on one ticket (verify failure, CI failure, implementer returning a bad format; includes counts from earlier runs in the progress comment's "Failures" row, and resets to zero when a human removes `needs-human`), or **3** cumulative rounds of harness review `changes_requested` → hand off to a human.
+- Hand off to a human: `addLabels: ["needs-human"]`, `assignee: "me"`, and a Linear comment summarizing the cause of each failure and the suggested next step. Leave the state unchanged. `git switch main`.
+- After a human handles it and removes `needs-human`, rerunning `/ticket <ID>` resumes from the actual state.
 
-## 衍生票
+## Follow-up tickets
 
-implementer / reviewer 的 `proposals` 以及 `assumptions` 中需要人確認的項目，依 `specs/HARNESS_SPEC.md` §8 開票：
-- 先用 `mcp__linear__list_issues`（`query`）搜尋相似票，有就留言補充。
-- 新票內文開頭加 `<!-- harness:created-by-agent source=<ID> -->`，並帶上 `agent-proposed` 或 `spec-needed` 標籤。
-- 每次執行最多開 3 張。
+For the implementer's and reviewer's `proposals`, and any `assumptions` that need human confirmation, open tickets per `specs/HARNESS_SPEC.md` §8:
+- First search for similar tickets with `mcp__linear__list_issues` (`query`). If one exists, add a comment instead.
+- Start the new ticket body with `<!-- harness:created-by-agent source=<ID> -->` and add the `agent-proposed` or `spec-needed` label.
+- Open at most 3 per run.
 
-## 進度留言
+## Progress comment
 
-在票上維護**一則**以 `<!-- harness:progress -->` 開頭的留言（`mcp__linear__list_comments` 找到既有的 id，用 `mcp__linear__save_comment` 的 `id` 更新；沒有才新增）。在 2、4、6、8 與交給人時更新：
+Maintain **one** comment on the ticket that starts with `<!-- harness:progress -->` (find its id with `mcp__linear__list_comments` and update it through the `id` of `mcp__linear__save_comment`; create one only if none exists). Update it at steps 2, 4, 6 and 8, and when handing off to a human:
 
 ```markdown
 <!-- harness:progress -->
-**Harness 進度**
-| 項目 | 內容 |
+**Harness progress**
+| Item | Value |
 |---|---|
-| 階段 | implement / ci / review / awaiting_merge / done / needs_human |
+| Stage | implement / ci / review / awaiting_merge / done / needs_human |
 | Branch | `<branch>` |
 | PR | #<n> |
-| Review 輪數 | <N> |
-| 失敗紀錄 | 1. … |
-| 下一步 | … |
+| Review rounds | <N> |
+| Failures | 1. … |
+| Next step | … |
 ```
 
-## 禁止
+## Forbidden
 
-- `gh pr merge`、`git push --force`、直接 push 到 `main`、`git reset --hard`。
-- 自己寫或修改產品程式碼（交給 implementer）。
-- 在規格之外改變票的狀態。
+- `gh pr merge`, `git push --force`, pushing directly to `main`, `git reset --hard`.
+- Writing or modifying product code yourself (that goes to the implementer).
+- Changing ticket state outside the spec.
