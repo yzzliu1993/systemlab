@@ -9,7 +9,7 @@ import {
 describe('getPrerequisites / getDependents', () => {
   const nodes = ['a', 'b', 'c', 'd'];
 
-  it('T1: 正常流程：前置', () => {
+  it('T1: happy path: prerequisites', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['b', 'd'],
@@ -18,7 +18,7 @@ describe('getPrerequisites / getDependents', () => {
     expect(getPrerequisites('d', nodes, edges)).toEqual(['a', 'b', 'c']);
   });
 
-  it('T2: 正常流程：後續', () => {
+  it('T2: happy path: dependents', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['b', 'd'],
@@ -27,7 +27,7 @@ describe('getPrerequisites / getDependents', () => {
     expect(getDependents('a', nodes, edges)).toEqual(['b', 'd']);
   });
 
-  it('T3: 菱形不重複', () => {
+  it('T3: diamond has no duplicates', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['a', 'c'],
@@ -37,16 +37,16 @@ describe('getPrerequisites / getDependents', () => {
     expect(getPrerequisites('d', nodes, edges)).toEqual(['a', 'b', 'c']);
   });
 
-  it('T4: 邊界值：孤立節點', () => {
+  it('T4: boundary: isolated node', () => {
     expect(getPrerequisites('a', ['a', 'b'], [])).toEqual([]);
     expect(getDependents('a', ['a', 'b'], [])).toEqual([]);
   });
 
-  it('T5: 錯誤處理：未知節點', () => {
+  it('T5: error handling: unknown node', () => {
     expect(() => getDependents('x', ['a'], [])).toThrow(/x/);
   });
 
-  it('T6: 錯誤處理：循環', () => {
+  it('T6: error handling: cycle', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['b', 'a'],
@@ -56,7 +56,7 @@ describe('getPrerequisites / getDependents', () => {
 });
 
 describe('topologicalSort', () => {
-  it('T1: 正常流程，每條邊 from 在 to 之前', () => {
+  it('T1: happy path, every edge has from before to', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['b', 'c'],
@@ -69,15 +69,15 @@ describe('topologicalSort', () => {
     expect(result).toEqual(['a', 'b', 'c', 'd']);
   });
 
-  it('T2: 空圖回傳空陣列', () => {
+  it('T2: empty graph returns empty array', () => {
     expect(topologicalSort([], [])).toEqual([]);
   });
 
-  it('T3: 無邊時維持原始順序', () => {
+  it('T3: keeps original order when there are no edges', () => {
     expect(topologicalSort(['c', 'a', 'b'], [])).toEqual(['c', 'a', 'b']);
   });
 
-  it('T4: 循環拋出 CycleError，message 包含循環節點', () => {
+  it('T4: cycle throws CycleError, message contains the cycle nodes', () => {
     const run = () =>
       topologicalSort(
         ['a', 'b', 'c'],
@@ -93,13 +93,13 @@ describe('topologicalSort', () => {
     }
   });
 
-  it('T5: 邊引用未知節點拋出 Error，message 包含該節點', () => {
+  it('T5: edge referencing an unknown node throws Error, message contains that node', () => {
     expect(() => topologicalSort(['a'], [['a', 'x']])).toThrow(/x/);
   });
 });
 
 describe('computeLevels', () => {
-  it('T1: 正常流程', () => {
+  it('T1: happy path', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['a', 'c'],
@@ -109,7 +109,7 @@ describe('computeLevels', () => {
     expect(computeLevels(['a', 'b', 'c', 'd'], edges)).toEqual([['a'], ['b', 'c'], ['d']]);
   });
 
-  it('T2: 最長路徑決定層級', () => {
+  it('T2: longest path determines the level', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['b', 'c'],
@@ -118,15 +118,15 @@ describe('computeLevels', () => {
     expect(computeLevels(['a', 'b', 'c'], edges)).toEqual([['a'], ['b'], ['c']]);
   });
 
-  it('T3: 邊界值：空圖', () => {
+  it('T3: boundary: empty graph', () => {
     expect(computeLevels([], [])).toEqual([]);
   });
 
-  it('T4: 邊界值：無邊，維持原始順序', () => {
+  it('T4: boundary: no edges, keeps original order', () => {
     expect(computeLevels(['c', 'a', 'b'], [])).toEqual([['c', 'a', 'b']]);
   });
 
-  it('T5: 錯誤處理：循環', () => {
+  it('T5: error handling: cycle', () => {
     const edges: Array<[string, string]> = [
       ['a', 'b'],
       ['b', 'a'],

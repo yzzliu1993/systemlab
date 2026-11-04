@@ -21,17 +21,17 @@ function catchError(input: unknown): RoadmapValidationError {
 }
 
 describe('parseRoadmap', () => {
-  it('T1: 合法 roadmap 回傳與輸入深度相等的資料', () => {
+  it('T1: valid roadmap returns data deeply equal to the input', () => {
     const input = roadmap([node('a'), node('b', ['a'])]);
     expect(parseRoadmap(input)).toEqual(input);
   });
 
-  it('T2: 無前置節點且只有 1 個節點時不拋錯', () => {
+  it('T2: does not throw with a single node that has no prerequisites', () => {
     const result = parseRoadmap(roadmap([node('a', [])]));
     expect(result.nodes).toHaveLength(1);
   });
 
-  it('T3: 缺少 summary 時指出節點與欄位路徑', () => {
+  it('T3: missing summary reports the node and field path', () => {
     const { summary: _summary, ...broken } = node('b');
     const error = catchError(roadmap([node('a'), broken]));
     expect(error.issues).toEqual(
@@ -44,14 +44,14 @@ describe('parseRoadmap', () => {
     }
   });
 
-  it('T4: prerequisites 型別錯誤時指出路徑與 nodeId', () => {
+  it('T4: wrong prerequisites type reports the path and nodeId', () => {
     const error = catchError(roadmap([{ ...node('a'), prerequisites: 'x' }]));
     expect(error.issues).toEqual([
       expect.objectContaining({ nodeId: 'a', path: 'nodes[0].prerequisites' }),
     ]);
   });
 
-  it('T5: 空字串 title 與空 nodes 皆驗證失敗', () => {
+  it('T5: empty title and empty nodes both fail validation', () => {
     const a = catchError(roadmap([{ ...node('a'), title: '' }]));
     expect(a.issues).toEqual([
       expect.objectContaining({ nodeId: 'a', path: 'nodes[0].title' }),
@@ -63,20 +63,20 @@ describe('parseRoadmap', () => {
     ]);
   });
 
-  it('T6: 節點 id 重複時指向後出現的節點', () => {
+  it('T6: duplicate node id points to the later node', () => {
     const error = catchError(roadmap([node('a'), node('a')]));
     expect(error.issues).toEqual([
       expect.objectContaining({ nodeId: 'a', path: 'nodes[1].id' }),
     ]);
   });
 
-  it('T7: 頂層不是物件時 nodeId 為 null', () => {
+  it('T7: nodeId is null when the top level is not an object', () => {
     const error = catchError(null);
     expect(error.issues.length).toBeGreaterThan(0);
     expect(error.issues[0]?.nodeId).toBeNull();
   });
 
-  it('T8: sample.json 通過驗證且至少 5 個節點', () => {
+  it('T8: sample.json passes validation and has at least 5 nodes', () => {
     const result = parseRoadmap(sample);
     expect(result.nodes.length).toBeGreaterThanOrEqual(5);
   });
