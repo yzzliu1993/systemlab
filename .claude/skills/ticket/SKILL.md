@@ -70,7 +70,8 @@ How to find human comments after a review: read PR comments and review bodies (`
 If the PR is open, get onto its branch before you continue, whichever row applies. A resumed run can start on any branch, and `implementer` and `reviewer` both work from the current one. `<branch>` is the PR's `headRefName`.
 
 1. If `git status --porcelain` is not empty, report it and stop. Do not switch branches, stash or discard anything.
-2. Run `git switch <branch> && git pull --ff-only`. If this fails, report the error and stop. A rebase in step 8 leaves the local branch diverged from the remote, so say so if that is the cause.
+2. If `git branch --list <branch>` prints the branch, run `git cherry -v origin/<branch> <branch>`. It compares patches, not hashes, because a rebase in step 8 gives commits already on the remote new hashes. Each `+` line is a commit with no matching patch on the remote. If there is a `+` line, name those commits and stop. Do not push them or change the branch, because they may be unfinished work from an interrupted run. If the command fails, report the error and stop.
+3. Run `git switch -C <branch> origin/<branch>`. This aligns the branch with the remote, and creates it if there is no local branch. If this fails, report the error and stop.
 
 ## 2. Prepare the branch
 
