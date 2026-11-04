@@ -13,7 +13,7 @@
       "Bash(gh pr create *)", "Bash(gh pr list *)", "Bash(gh pr view *)", "Bash(gh pr comment *)",
       "Bash(gh pr update-branch *)", "Bash(gh pr checks *)", "Bash(gh pr diff *)", "Bash(gh pr merge * --squash)",
       "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh run watch *)", "Bash(gh run rerun *)",
-      "Bash(gh api repos/yzzliu1993/systemlab/pulls/*)","Bash(git cherry *)"
+      "Bash(gh api repos/yzzliu1993/systemlab/pulls/*)"
     ],
     "deny": [
       "Bash(gh pr merge *--admin*)",
