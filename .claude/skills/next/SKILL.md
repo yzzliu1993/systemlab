@@ -22,7 +22,7 @@ For tickets from `mcp__linear__list_issues` (team `Youzhuliu`, `label: "awaiting
 Skip tickets with a `needs-human`, `spec-needed`, `agent-proposed` or `draft` label.
 
 1. **Interrupted tickets**: state In Progress, with a `<!-- harness:progress -->` comment on the ticket (an In Progress ticket without this comment is one a human is working on, so skip it).
-2. **Human rejections**: state In Review, no `awaiting-merge`, with a `<!-- harness:progress -->` comment.
+2. **Human rejections or runs interrupted after review**: state In Review, no `awaiting-merge`, with a `<!-- harness:progress -->` comment. `/ticket` step 1 tells the two apart.
 3. **Todo**: state Todo, and all blocked-by tickets are Done (`includeRelations: true` on `get_issue`). Sort by priority 1→4, with 0 (none) last; within a priority, by creation time, oldest first.
 4. **Backlog decomposition**: state Backlog, no `decomposed` label, last updated more than 30 minutes ago (to avoid decomposing a ticket still being written), and the body does **not** have the `<!-- harness:created-by-agent` marker (agent-opened tickets are not decomposed automatically).
 
