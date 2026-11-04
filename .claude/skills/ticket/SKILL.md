@@ -14,12 +14,13 @@ Ticket id: `$ARGUMENTS` (called `<ID>` below; `<id>` is the lowercase form, for 
 ## 0. Read and check the ticket
 
 1. Get the ticket with `mcp__linear__get_issue` (`includeRelations: true`).
-2. **Stop** in the cases below, explain why, and change nothing:
+2. If the ticket has `awaiting-merge` and its state is Done or In Review, find its PR (see step 1). If the PR is merged, go straight to 9. Linear may already have set the ticket to Done, so this check comes before the stop cases.
+3. **Stop** in the cases below, explain why, and change nothing:
    - It has a `needs-human`, `spec-needed`, `agent-proposed` or `draft` label.
    - Its state is Backlog (suggest `/decompose` instead), Done or Canceled.
    - A blocked-by ticket is not Done.
    - Its state is In Review with `awaiting-merge` (already waiting for a human to merge).
-3. When the state is Todo, check the Definition of Ready: the body must have `## Goal`, `## Scope`, `## Acceptance criteria` and `## Test scenarios` (with at least one `T<number>` table row). If any is missing: add the `needs-human` label, assign to `me`, comment with the missing sections, then stop.
+4. When the state is Todo, check the Definition of Ready: the body must have `## Goal`, `## Scope`, `## Acceptance criteria` and `## Test scenarios` (with at least one `T<number>` table row). If any is missing: add the `needs-human` label, assign to `me`, comment with the missing sections, then stop.
 
 ## 1. Decide where to resume
 
@@ -28,14 +29,16 @@ Decide from the actual state, not from memory:
 ```bash
 git fetch origin --prune
 git ls-remote --heads origin "*/<id>/*"
-gh pr list --state all --search "head:<id>" --json number,state,headRefName,url,headRefOid
+gh pr list --state all --search "<ID> in:title" --json number,title,state,headRefName,url,headRefOid --jq '[.[] | select(.title | startswith("[<ID>]"))]'
 ```
+
+Find PRs by title, because the `head:` search qualifier matches only a full branch name. The title search is fuzzy, so keep the `startswith` filter. The ticket's PR is the open one, otherwise the merged one. Ignore PRs closed without merging.
 
 | Actual state | Start from |
 |---|---|
-| No remote branch | 2 (new branch) |
-| Branch exists, no PR | 2 (switch to the existing branch) → 3 |
 | PR merged | 9 (close out) |
+| No open or merged PR, no remote branch | 2 (new branch) |
+| No open or merged PR, remote branch exists | 2 (switch to the existing branch) → 3 |
 | PR open, CI failed on the latest commit | 5 failure handling |
 | PR open, no harness review on the latest commit | 5 → 6 |
 | PR open, harness review on the latest commit is `changes_requested` | 7 (rework) |
@@ -121,7 +124,10 @@ Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp fil
 
 - Remove `awaiting-merge` (`removeLabels`). If the state is not Done, set it to Done.
 - Rewrite the progress comment as a final summary (review rounds, failure count).
-- `git switch main && git pull --ff-only`, then delete the local branch (`git branch -d <branch>`).
+- `git switch main && git pull --ff-only`.
+- Delete the local branch, using the PR's `headRefName` as `<branch>`. Skip this if there is no local branch. `git branch -d` always refuses after a squash merge, so compare commits instead:
+  - `git rev-parse <branch>` equals the PR's `headRefOid` → `git branch -D <branch>`. Everything on the branch is in the PR.
+  - Otherwise keep the branch and report it. It may hold commits that are not in the PR.
 
 ## Circuit breaker and handing off to a human
 
