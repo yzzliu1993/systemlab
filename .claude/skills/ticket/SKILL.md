@@ -129,7 +129,7 @@ Read the json block at the end of the reply before posting anything. Never infer
 - Block missing, or `verdict` is not `approve` or `changes_requested` → ask the same `reviewer` once for the json block with `SendMessage`, and add a `format` row to the friction comment.
 - Still missing → jump to "Hand off to a human", with the missing verdict as the reason. Do not post the review.
 
-Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp file>`), starting with:
+Post the reviewer's markdown to the PR without its `## Verdict` section (`gh pr comment <n> --body-file <temp file>`), starting with:
 
 ```
 <!-- harness:review round=<N> sha=<headRefOid from step 5> verdict=<verdict> -->
