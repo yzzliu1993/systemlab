@@ -44,7 +44,7 @@ Read each ticket's comments with `mcp__linear__list_comments`, three tickets at 
 Open tickets per `specs/HARNESS_SPEC.md` §8, with these limits:
 
 - Search with `mcp__linear__list_issues` (`query`) first. If a similar ticket exists, add the new evidence as a comment on it.
-- Start the body with `<!-- harness:created-by-agent source=YOU-32 -->` and add the `agent-proposed` label.
+- Start the body with `<!-- harness:created-by-agent source=YOU-32 -->` and add the `agent-proposed` label. If its scope is protected paths only, add `harness` too.
 - Open at most 3 per run, strongest evidence first. List the others in the report.
 
 ## 6. Log the run
