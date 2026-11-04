@@ -128,7 +128,7 @@ When you need to act (`awaiting-merge`, `needs-human`), the main session **assig
 Agents raise `proposals` only for what they notice inside one ticket. Friction records the rest, and `/retro` looks for patterns across tickets.
 
 - **Recording**: at the end of every `/ticket` run, the main session adds rows to one append-only `<!-- harness:friction -->` comment on the ticket. A run with no problems leaves no comment. It records at the end of each run, not at close-out, because close-out may happen in a later session. The `/ticket` skill defines the row types.
-- **Reading**: `/retro` reads Done tickets completed since its last run, at most 20, reading comments three tickets at a time.
+- **Reading**: `/retro` reads Done tickets completed since its last run, at most 20, reading comments three tickets at a time. It takes the oldest first, so a later run picks up any it leaves.
 - **Measuring**: `/retro` reports failures, review rounds and human interventions per ticket, and compares them with the last run.
 - **Opening tickets**: a ticket needs evidence: the same problem on at least two tickets, or one clear failure, with ticket ids. The limits in §8 apply.
 - **Run log**: each run adds a `<!-- harness:retro at=<ISO time> -->` comment on YOU-32. The next run gets its start time from the newest one.

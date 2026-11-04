@@ -16,7 +16,7 @@ Read the comments on YOU-32 with `mcp__linear__list_comments`. The last run is t
 
 ## 2. Pick the tickets
 
-`mcp__linear__list_issues` with team `Youzhuliu`, state `Done`, `completedAt` set to the last run's time (omit it on the first run) and `limit: 20`. Keep the 20 most recently completed, and say so in the report if more exist.
+`mcp__linear__list_issues` with team `Youzhuliu`, state `Done`, `completedAt` set to the last run's time (omit it on the first run) and `limit: 250`. Drop any ticket listed under "Tickets read" in the last run's log. Sort the rest by completion time and keep the **oldest** 20, so a later run picks up what this one leaves. Say so in the report if more exist.
 
 If there are no tickets, skip to step 6 and log a run that read nothing.
 
@@ -29,7 +29,7 @@ Read each ticket's comments with `mcp__linear__list_comments`, three tickets at 
 
 ## 4. Measure and find problems
 
-1. Work out the average per ticket: failures, review rounds, and human interventions (friction rows of type `human`). Compare them with the previous run's log.
+1. Work out the average per ticket: failures (count the numbered entries in `Failures`; `none` is 0), review rounds, and human interventions (friction rows of type `human`). Compare them with the previous run's log.
 2. Group friction rows and failures that describe the same problem.
 3. Keep a problem only if it has evidence: the same problem on at least two tickets, or one clear failure. Name the ticket ids. Drop the rest.
 
@@ -49,10 +49,10 @@ Open tickets per `specs/HARNESS_SPEC.md` §8, with these limits:
 
 ## 6. Log the run
 
-Add a comment on YOU-32:
+Add a comment on YOU-32. Set `at` to the current time, or, if more tickets were left for a later run, to the completion time of the newest ticket read:
 
 ```markdown
-<!-- harness:retro at=<current ISO time> -->
+<!-- harness:retro at=<ISO time> -->
 **Retro run**
 | Item | Value |
 |---|---|
