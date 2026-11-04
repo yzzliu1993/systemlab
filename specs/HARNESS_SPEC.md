@@ -107,7 +107,9 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
 - The main session performs other transitions through the Linear MCP (`save_issue`): Todo → In Progress, setting In Review again after opening the PR, returning rejected work to In Progress, labels and comments.
 
 ### 3.3 `/next` selection order
-1. Close out: tickets with `awaiting-merge` that are already Done / Canceled get the label removed.
+Before selecting, `/next` updates local `main` with `git pull --ff-only`, and finishes if that fails. A paused run skips the update.
+
+1. Close out: tickets with `awaiting-merge` that are already Done / Canceled get the label removed, and the local branch of a merged PR is deleted if its head equals the PR head. Otherwise the branch is kept and reported.
 2. Interrupted tickets: In Progress with a `<!-- harness:progress -->` comment.
 3. Human rejections or runs interrupted after review: In Review, no `awaiting-merge`, with a progress comment. `/ticket` step 1 tells the two apart by whether a human commented after the latest `approve` review.
 4. Todo: all blocked-by tickets are Done; priority Urgent → Low, None last; within a priority, oldest first.
