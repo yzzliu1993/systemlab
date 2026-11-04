@@ -9,7 +9,7 @@
 ## 0. Goals and non-goals
 
 **Goals**
-- Claude Code moves Linear tickets from Backlog to In Review. Humans step in only at defined gates (pressing merge, answering questions).
+- Claude Code moves Linear tickets from Backlog to merged. Humans step in only at defined gates (merging PRs that do not qualify for auto-merge, answering questions).
 - After an interruption (closed session, exhausted quota, reboot), rerunning the same command resumes from the **actual state** (git branch, PR, CI, Linear).
 - When the spec is unclear, take the most conservative approach and open a ticket to ask a human instead of guessing.
 
@@ -24,12 +24,12 @@
 
 | Component | What it is | Responsible for | Not responsible for |
 |---|---|---|---|
-| **Main session** (orchestrator) | The Claude Code session you open, running `/ticket`, `/next` and `/decompose` | Reading tickets, changing Linear state and labels, creating branches, **verifying** subagent results, pushing, opening PRs, waiting for CI, posting reviews, opening follow-up tickets | Writing product code, merging |
+| **Main session** (orchestrator) | The Claude Code session you open, running `/ticket`, `/next` and `/decompose` | Reading tickets, changing Linear state and labels, creating branches, **verifying** subagent results, pushing, opening PRs, waiting for CI, posting reviews, opening follow-up tickets, auto-merging per §5.1 | Writing product code, merging outside §5.1 |
 | **implementer** | `.claude/agents/implementer.md` | Implementing and writing tests on the branch, running `npm run verify`, committing | Pushing, PRs, Linear |
 | **reviewer** | `.claude/agents/reviewer.md` | Read-only review of whether the diff meets the acceptance criteria and test scenarios | Modifying anything |
 | **decomposer** | `.claude/agents/decomposer.md` | Read-only repo exploration and proposing sub-tickets | Creating tickets (the main session does that) |
 | **CI** | GitHub Actions `verify` job | `npm ci && npm run verify` | — |
-| **Human** | You | Opening tickets, deciding on `agent-proposed`, answering `spec-needed`, handling `needs-human`, **pressing merge** | — |
+| **Human** | You | Opening tickets, deciding on `agent-proposed`, answering `spec-needed`, handling `needs-human`, **pressing merge on PRs that do not qualify for auto-merge** | — |
 
 > Core rule: **subagents produce results, and the main session verifies them before advancing state**. An implementer saying it is done does not count: the main session runs verify itself and waits for green CI.
 > Subagents have separate contexts, so heavy file reading during implementation and review does not fill the main session. The reviewer cannot see the implementer's reasoning, which keeps the review independent.
@@ -46,7 +46,7 @@
 |---|---|---|
 | `draft` | Still being written; do not decompose | Human |
 | `decomposed` | Already decomposed; do not decompose again | Main session |
-| `awaiting-merge` | Review passed and CI is green; waiting for a human to merge | Main session |
+| `awaiting-merge` | Review passed and CI is green, but the PR did not qualify for auto-merge; waiting for a human to merge | Main session |
 | `needs-human` | Stuck and needs a human; the flow skips this ticket | Main session |
 | `spec-needed` | Question ticket for an unclear spec | Main session |
 | `agent-proposed` | An idea or out-of-scope bug raised by an agent | Main session |
@@ -87,7 +87,8 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
                      └──────────────────────────────────────────────── reviewer ◀──┘
                                                                            │ approve
                                                                            ▼
-                                                                  awaiting-merge ──human merges──▶ Done
+                                                                  §5.1 conditions hold ──auto-merge──▶ Done
+                                                                  otherwise ──▶ awaiting-merge ──human merges──▶ Done
 ```
 
 `.claude/skills/ticket/SKILL.md` is the source of truth for step details.
@@ -95,7 +96,7 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
 ### 3.1 Commands
 | Command | Purpose |
 |---|---|
-| `/ticket YOU-n` | Take one ticket to awaiting-merge; rerunning resumes from the actual state, and closes out the ticket once its PR is merged |
+| `/ticket YOU-n` | Take one ticket to auto-merge, or to awaiting-merge when a human must merge; rerunning resumes from the actual state, and closes out the ticket once its PR is merged |
 | `/next` | Close out merged tickets, then pick one ticket per §3.3 |
 | `/decompose YOU-n` | Decompose one Backlog ticket |
 | `/loop 10m /next` | Run `/next` on a timer (works while the session is open) |
@@ -133,7 +134,8 @@ When you need to act (`awaiting-merge`, `needs-human`), the main session **assig
 
 - Each subagent's last message ends with a json block (format in its definition file). The main session uses it to decide the next step.
 - Only the main session operates Linear. Subagents do not call Linear tools.
-- Forbidden actions (written in `CLAUDE.md` and the subagent definitions; also recommended as `permissions.deny` in `.claude/settings.json`): `gh pr merge`, `git push --force`, pushing to `main`, `git reset --hard`.
+- Forbidden actions (written in `CLAUDE.md` and the subagent definitions; also recommended as `permissions.deny` in `.claude/settings.json`): `gh pr merge --admin`, `git push --force`, pushing to `main`, `git reset --hard`.
+- Merging is forbidden outside §5.1. Subagents never merge. `.claude/settings.json` allows only the `--squash` form.
 
 ---
 
@@ -143,7 +145,20 @@ When you need to act (`awaiting-merge`, `needs-human`), the main session **assig
 - CI: `npm run verify` runs on push (the `verify` job is a required branch protection check and must be up to date with main).
 - The PR opens after the first push (the ticket moves to In Review with it). Later CI results and reviews all stay on the same PR.
 - If the PR falls behind main before merging: `gh pr update-branch --rebase`, then wait for CI on the new head. Conflicts are resolved by the implementer with `git merge origin/main`.
-- **The human gate is a person pressing squash merge** (one GitHub account cannot approve its own PR, so reviews are posted as PR comments).
+- **The human gate is a person pressing squash merge on PRs that do not qualify for auto-merge** (one GitHub account cannot approve its own PR, so reviews are posted as PR comments).
+
+### 5.1 Auto-merge
+
+`/ticket` step 8 runs `gh pr merge <n> --squash` only when all of these hold:
+
+- CI is green on the PR head commit.
+- The latest harness review has `verdict=approve` and its `sha` equals the PR head commit.
+- `mergeStateStatus` is `CLEAN`.
+- No changed file is a protected path, including the old path of a renamed file.
+
+Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`. These decide how the harness and its checks behave, so an agent must not change them and merge the result by itself.
+
+If a condition fails, or `gh pr merge` returns an error, the ticket gets `awaiting-merge` and a comment with the reason. A rebase changes the head commit, so the existing review stops matching and the PR goes to a human. A PR that auto-merges leaves no window for human rejection.
 
 ---
 
@@ -217,7 +232,7 @@ CLAUDE.md                # Project conventions (subagents read it too)
 | Working directory | The main session switches branches directly in the repo directory; the working directory must be clean before running |
 | Trigger | Manual `/ticket` and `/next`; `/loop` when needed |
 | Claude billing | Pro subscription; subagents use sonnet, the main session uses the model you choose |
-| Merge | Manual |
+| Merge | Automatic when §5.1 holds, otherwise manual |
 
 ### 10.1 One-time setup
 1. Linear labels (§2.2), PR automations (§3.2), GitHub integration linked to the repo.
