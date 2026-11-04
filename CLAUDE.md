@@ -1,6 +1,6 @@
 # systemlab
 
-A React 19 + TypeScript + Vite single-page app. Claude Code drives development from Linear tickets (`/ticket`, `/next`, `/decompose`). See `specs/HARNESS_SPEC.md` for the spec.
+A React 19 + TypeScript + Vite single-page app. Claude Code drives development from Linear tickets (`/ticket`, `/next`, `/decompose`), and `/retro` turns problems from real runs into improvement tickets. See `specs/HARNESS_SPEC.md` for the spec.
 
 <!-- TODO(human): add one or two sentences on what this product is and who it is for. -->
 
@@ -70,7 +70,7 @@ Write all new repo content, test names, commit messages, PR titles and bodies, a
 
 For the full flow see `specs/HARNESS_SPEC.md`, `.claude/skills/` and `.claude/agents/`.
 
-- The **main session** (when running `/ticket`, `/next` or `/decompose`) owns Linear state, pushes and PRs. Product code goes to the `implementer` subagent, and review goes to `reviewer`.
+- The **main session** (when running `/ticket`, `/next`, `/decompose` or `/retro`) owns Linear state, pushes and PRs. Product code goes to the `implementer` subagent, and review goes to `reviewer`.
 - **Always forbidden**: merging PRs outside the auto-merge below, `gh pr merge --admin`, `git push --force`, pushing directly to `main`, `git reset --hard`.
 - **Auto-merge**: only `/ticket` step 8 may merge, with `gh pr merge <n> --squash`, and only when CI is green on the PR head commit, the latest harness review is `approve` for that commit, `mergeStateStatus` is `CLEAN`, and no changed file is a protected path. Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`. Otherwise a human merges.
 - **Forbidden for subagents**: changing Linear, pushing, merging, and modifying `.github/workflows/`, `.claude/`, `CLAUDE.md`, `specs/`, dependencies in `package.json`, or config files (`tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`). When one of these is needed, return `blocked` and explain why.

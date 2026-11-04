@@ -24,7 +24,7 @@
 
 | Component | What it is | Responsible for | Not responsible for |
 |---|---|---|---|
-| **Main session** (orchestrator) | The Claude Code session you open, running `/ticket`, `/next` and `/decompose` | Reading tickets, changing Linear state and labels, creating branches, **verifying** subagent results, pushing, opening PRs, waiting for CI, posting reviews, opening follow-up tickets, auto-merging per §5.1 | Writing product code, merging outside §5.1 |
+| **Main session** (orchestrator) | The Claude Code session you open, running `/ticket`, `/next`, `/decompose` and `/retro` | Reading tickets, changing Linear state and labels, creating branches, **verifying** subagent results, pushing, opening PRs, waiting for CI, posting reviews, opening follow-up tickets, auto-merging per §5.1 | Writing product code, merging outside §5.1 |
 | **implementer** | `.claude/agents/implementer.md` | Implementing and writing tests on the branch, running `npm run verify`, committing | Pushing, PRs, Linear |
 | **reviewer** | `.claude/agents/reviewer.md` | Read-only review of whether the diff meets the acceptance criteria and test scenarios | Modifying anything |
 | **decomposer** | `.claude/agents/decomposer.md` | Read-only repo exploration and proposing sub-tickets | Creating tickets (the main session does that) |
@@ -99,6 +99,7 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
 | `/ticket YOU-n` | Take one ticket to auto-merge, or to awaiting-merge when a human must merge; rerunning resumes from the actual state, and closes out the ticket once its PR is merged |
 | `/next` | Close out merged tickets, then pick one ticket per §3.3 |
 | `/decompose YOU-n` | Decompose one Backlog ticket |
+| `/retro` | Find repeated problems in recently finished tickets and open improvement tickets (§3.6) |
 | `/loop 10m /next` | Run `/next` on a timer (works while the session is open) |
 
 ### 3.2 State changes
@@ -121,6 +122,22 @@ When you need to act (`awaiting-merge`, `needs-human`), the main session **assig
 - Pause `/next`: create `.harness/PAUSE` (only close-out runs). Delete it to resume.
 - Disagree with a review: comment on the PR and remove `awaiting-merge`, then run `/ticket YOU-n` (or wait for `/next`). Rework starts with your comments.
 - You may push to an agent's branch manually. Resuming uses the remote as the source of truth.
+
+### 3.6 Friction and `/retro`
+
+Agents raise `proposals` only for what they notice inside one ticket. Friction records the rest, and `/retro` looks for patterns across tickets.
+
+- **Recording**: at the end of every `/ticket` run, the main session adds rows to one append-only `<!-- harness:friction -->` comment on the ticket. A run with no problems leaves no comment. It records at the end of each run, not at close-out, because close-out may happen in a later session. The `/ticket` skill defines the row types.
+- **Reading**: `/retro` reads Done tickets completed since its last run, at most 20, reading comments three tickets at a time. It takes the oldest first, so a later run picks up any it leaves.
+- **Measuring**: `/retro` reports failures, review rounds and human interventions per ticket, and compares them with the last run.
+- **Opening tickets**: a ticket needs evidence: the same problem on at least two tickets, or one clear failure, with ticket ids. The limits in §8 apply.
+- **Run log**: each run adds a `<!-- harness:retro at=<ISO time> -->` comment on YOU-32. The next run gets its start time from the newest one.
+
+Guardrails:
+
+- Changes to permissions, protected paths or merge conditions come only from a human. `/retro` reports these and opens no ticket.
+- One open harness PR at a time, so an effect can be traced to its change.
+- A human always merges harness changes.
 
 ---
 
@@ -217,6 +234,7 @@ Volume limits and identification:
     ticket/SKILL.md      # /ticket
     next/SKILL.md        # /next
     decompose/SKILL.md   # /decompose
+    retro/SKILL.md       # /retro
 .github/workflows/ci.yml
 CLAUDE.md                # Project conventions (subagents read it too)
 .harness/PAUSE           # Local pause switch (gitignored)
@@ -239,3 +257,29 @@ CLAUDE.md                # Project conventions (subagents read it too)
 2. Claude Code connected to the Linear MCP (check with `/mcp`).
 3. `gh auth login`.
 4. Recommended: turn off GitHub issue sync in Linear; turn on "auto-close parent when all sub-issues are done".
+
+---
+
+## 11. External settings
+
+These settings live in GitHub and Linear, not in the repo, so a change to them leaves no diff by itself. This table is the record.
+
+| Where | Setting | Value |
+|---|---|---|
+| GitHub branch protection (`main`) | Required check | `verify`, must be up to date with main |
+| GitHub branch protection (`main`) | Enforce for admins | On |
+| GitHub repo | Merge methods | Squash only |
+| GitHub repo | Delete branch on merge | On |
+| GitHub repo | Squash commit title | `COMMIT_OR_PR_TITLE` |
+| GitHub repo | Auto-merge feature | Off (`/ticket` merges by itself) |
+| Linear team | Pull request automations | PR opened → In Review, PR merged → Done |
+
+### 11.1 Changing a setting
+
+1. A ticket states the setting, current value, proposed value, reason and rollback. `/retro` or a human opens it.
+2. The human approves by removing `agent-proposed`.
+3. The main session checks that the live value matches the ticket, then applies the change. If it cannot apply the setting, it gives the human the exact steps.
+4. The main session tests the change and records the result on the ticket.
+5. The main session updates the table above in a PR, and a human merges it.
+
+Branch protection is a merge condition, so only a human proposes or changes it. The main session then records the new value in this table.
