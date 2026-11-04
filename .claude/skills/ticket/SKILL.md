@@ -1,6 +1,6 @@
 ---
 name: ticket
-description: Process one Linear ticket, from reading it to waiting for merge. Read the ticket → create a branch → implementer implements → verify locally → push and open a PR → In Review → wait for CI → reviewer reviews → wait for a human to merge. Rerunning after an interruption resumes from the actual state.
+description: Process one Linear ticket, from reading it to merge. Read the ticket → create a branch → implementer implements → verify locally → push and open a PR → In Review → wait for CI → reviewer reviews → auto-merge if all conditions hold, otherwise wait for a human to merge. Rerunning after an interruption resumes from the actual state.
 argument-hint: <ticket id, for example YOU-20>
 disable-model-invocation: true
 ---
@@ -111,14 +111,23 @@ Post the reviewer's markdown to the PR (`gh pr comment <n> --body-file <temp fil
 2. If the PR is behind main or has conflicts, tell the implementer to `git merge origin/main` first.
 3. Give the "Must fix" list to the implementer → back to 3 (step 4 then pushes to the same PR).
 
-## 8. Wait for merge
+## 8. Merge or wait for a human
 
 1. Check `gh pr view <n> --json mergeStateStatus`:
    - `BEHIND` → `gh pr update-branch <n> --rebase`, then `git fetch origin` and `git switch --detach origin/main` (the local branch has diverged from the remote, so do not pull), and wait for the new head to pass CI (the commands in 5, getting the sha from `gh pr view <n> --json headRefOid`).
    - `DIRTY` (conflicts) → 7, telling the implementer to resolve them with `git merge origin/main`.
-2. `mcp__linear__save_issue`: `state: "In Review"`, `addLabels: ["awaiting-merge"]`, `assignee: "me"`.
-3. Linear comment: "✅ Review passed and CI is green. Waiting for you to merge: <PR link>. If you disagree, comment on the PR, remove `awaiting-merge`, then run `/ticket <ID>`."
-4. `git switch main && git pull --ff-only`.
+2. Check the auto-merge conditions. **All** of these must hold, using fresh values from GitHub, not memory:
+   - CI is green on the PR head commit (`gh pr view <n> --json headRefOid,statusCheckRollup`).
+   - The latest harness review has `verdict=approve` and its `sha` equals `headRefOid`. A rebase in step 1 changes the head commit, so the review no longer matches and the PR goes to a human.
+   - `mergeStateStatus` is `CLEAN`. Any other value, including `UNKNOWN`, does not qualify.
+   - No changed file is a protected path. Get changed files from `gh pr diff <n> --name-only`, and the old path of any renamed file from `gh api repos/yzzliu1993/systemlab/pulls/<n>/files --paginate --jq '.[].previous_filename // empty'`.
+
+   Protected paths: anything under `.claude/`, `.github/` or `specs/`, plus `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json` and `.dependency-cruiser.cjs`.
+3. All conditions hold → `gh pr merge <n> --squash`. Never use `--admin`. On success, update the progress comment and go to 9. On failure, go to 4 with the error as the reason.
+4. Otherwise wait for a human:
+   1. `mcp__linear__save_issue`: `state: "In Review"`, `addLabels: ["awaiting-merge"]`, `assignee: "me"`.
+   2. Linear comment: "✅ Review passed and CI is green. Not auto-merged: <reason, naming each unmet condition or protected path>. Waiting for you to merge: <PR link>. If you disagree, comment on the PR, remove `awaiting-merge`, then run `/ticket <ID>`."
+   3. `git switch main && git pull --ff-only`.
 
 ## 9. Close out (PR merged)
 
@@ -161,6 +170,6 @@ Maintain **one** comment on the ticket that starts with `<!-- harness:progress -
 
 ## Forbidden
 
-- `gh pr merge`, `git push --force`, pushing directly to `main`, `git reset --hard`.
+- `gh pr merge` anywhere except step 8, `gh pr merge --admin`, `git push --force`, pushing directly to `main`, `git reset --hard`.
 - Writing or modifying product code yourself (that goes to the implementer).
 - Changing ticket state outside the spec.
