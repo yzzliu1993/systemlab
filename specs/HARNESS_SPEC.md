@@ -175,6 +175,7 @@ Guardrails:
 - CI is green on the PR head commit.
 - The latest harness review has `verdict=approve` and its `sha` equals the PR head commit.
 - `mergeStateStatus` is `CLEAN`.
+- The PR is not a draft. A draft can report `CLEAN`, so `isDraft` is checked separately.
 - No changed file is a protected path, including the old path of a renamed file.
 
 Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`. These decide how the harness and its checks behave, so an agent must not change them and merge the result by itself.
