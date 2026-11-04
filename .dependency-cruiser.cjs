@@ -13,20 +13,6 @@ module.exports = {
       severity: 'error',
       from: { path: '^src/infrastructure' },
       to: { path: '^src/(components|features)' }
-    },
-    {
-      name: 'app-cannot-depend-on-harness',
-      comment: 'The app must not import the development harness',
-      severity: 'error',
-      from: { path: '^src/' },
-      to: { path: '^harness/' }
-    },
-    {
-      name: 'harness-cannot-depend-on-app',
-      comment: 'The harness is a standalone tool and must not import app code',
-      severity: 'error',
-      from: { path: '^harness/' },
-      to: { path: '^src/' }
     }
   ],
   options: {

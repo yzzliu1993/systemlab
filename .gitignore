@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Harness local state and logs
+# Harness local state (.harness/PAUSE)
 .harness/
