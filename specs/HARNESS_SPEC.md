@@ -51,6 +51,7 @@
 | `spec-needed` | Question ticket for an unclear spec | Main session |
 | `agent-proposed` | An idea or out-of-scope bug raised by an agent | Main session |
 | `harness` | Changes protected paths only (§5.1); runs through `/ticket` per §3.7 | Human or main session |
+| `main-ci-failure` | Reports a failed CI run on `main`; `/next` uses it to find earlier reports | Main session |
 
 (The v2 `agent:working` label is no longer used and can be deleted in Linear.)
 
@@ -111,12 +112,22 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
 Before selecting, `/next` updates local `main` with `git pull --ff-only`, and finishes if that fails. A paused run skips the update.
 
 1. Close out: tickets with `awaiting-merge` that are already Done / Canceled get the label removed, and the local branch of a merged PR is deleted if its head equals the PR head. Otherwise the branch is kept and reported.
-2. Interrupted tickets: In Progress with a `<!-- harness:progress -->` comment.
-3. Human rejections or runs interrupted after review: In Review, no `awaiting-merge`, with a progress comment. `/ticket` step 1 tells the two apart by whether a human commented after the latest `approve` review.
-4. Todo: all blocked-by tickets are Done; priority Urgent → Low, None last; within a priority, oldest first.
-5. Backlog: no `decomposed`, last updated more than 30 minutes ago, not opened by an agent.
+2. Check CI on `main`: see below. A paused run skips this.
+3. Interrupted tickets: In Progress with a `<!-- harness:progress -->` comment.
+4. Human rejections or runs interrupted after review: In Review, no `awaiting-merge`, with a progress comment. `/ticket` step 1 tells the two apart by whether a human commented after the latest `approve` review.
+5. Todo: all blocked-by tickets are Done; priority Urgent → Low, None last; within a priority, oldest first.
+6. Backlog: no `decomposed`, last updated more than 30 minutes ago, not opened by an agent.
 
 Always skip `needs-human`, `spec-needed`, `agent-proposed` and `draft`.
+
+The CI check selects the newest run of the `CI` workflow on `main` whose conclusion is not `cancelled`. A run has failed if its conclusion is `failure`, `timed_out` or `startup_failure`. The check stops there if the run has not finished or has any other conclusion. For a failed run, the first match below applies:
+
+1. A `main-ci-failure` ticket in any state, including Done and Canceled, names the failing commit: do nothing.
+2. The log looks like CI flakiness and `attempt` is 1: rerun once and open no ticket. The next `/next` reads the result.
+3. A `main-ci-failure` ticket is open: add a comment with the commit, run URL and log excerpt.
+4. Otherwise open a ticket per §8.
+
+A failure does not pause work: selection continues as usual, and the final report names what the check did. A `gh` or Linear error is reported, opens no ticket and does not stop `/next`. If only the log cannot be read or is empty, the check continues and says so in the ticket or comment.
 
 ### 3.4 Notifications
 When you need to act (`awaiting-merge`, `needs-human`), the main session **assigns the ticket to you** and leaves a comment.
@@ -229,12 +240,14 @@ There is no separate state file. Resuming decides from the actual state (`/ticke
 | Unclear spec with no conservative approach | Todo | `spec-needed` | implementer returns `blocked` → original ticket gets `needs-human` and is blocked by the new ticket |
 | Out-of-scope enhancement / refactor | Backlog | `agent-proposed` | Does not affect merging |
 | Out-of-scope bug | Todo | `agent-proposed` | Does not affect merging |
+| Failed CI run on `main` (§3.3) | Todo, Urgent | `agent-proposed`, `main-ci-failure` | No original ticket; assigned to you |
 
 "Most conservative approach": do only what the ticket states; do not change existing public interfaces; do not add packages or change config files and data formats; among several readings, pick the smallest change. Only when none of these can be met is there "no conservative approach".
 
 Volume limits and identification:
 - Before creating, search for similar tickets with `list_issues`. If one exists, add a comment instead. Open at most 3 per run.
 - Tickets opened by an agent start with `<!-- harness:created-by-agent source=YOU-n -->` and always carry `agent-proposed` or `spec-needed`.
+- A ticket for a failed CI run on `main` has no source ticket. It takes `YOU-n` from the failing commit subject, or uses `source=main` if there is none. Its body has only the failure details, so a human adds the Definition of Ready sections (§2.3) before removing `agent-proposed`.
 - A new ticket whose scope is protected paths only also gets `harness`.
 - `agent-proposed` / `spec-needed` tickets are not processed automatically. They enter the flow after you remove the label.
 
