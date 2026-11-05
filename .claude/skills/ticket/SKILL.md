@@ -193,6 +193,11 @@ Post the reviewer's markdown to the PR without its `## Verdict` section (`gh pr 
 For the implementer's and reviewer's `proposals`, and any `assumptions` that need human confirmation, open tickets per `specs/HARNESS_SPEC.md` §8:
 - First search for similar tickets with `mcp__linear__list_issues` (`query`). If one exists, add a comment instead.
 - Start the new ticket body with `<!-- harness:created-by-agent source=<ID> -->` and add the `agent-proposed` or `spec-needed` label. If its scope is protected paths only, add `harness` too.
+- Exception: an out-of-scope bug goes to Todo with `bug` instead of `agent-proposed` only when all of these hold. Otherwise it keeps `agent-proposed`.
+  - The body has every Definition of Ready section (spec §2.3).
+  - The body states actual behavior, expected behavior and steps to reproduce.
+  - Its scope has no protected path (step 8).
+  - The body of `<ID>` does not have the `harness:created-by-agent` marker.
 - Open at most 3 per run.
 
 ## Progress comment
