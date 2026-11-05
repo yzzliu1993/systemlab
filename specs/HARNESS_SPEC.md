@@ -50,6 +50,7 @@
 | `needs-human` | Stuck and needs a human; the flow skips this ticket | Main session |
 | `spec-needed` | Question ticket for an unclear spec | Main session |
 | `agent-proposed` | An idea or out-of-scope bug raised by an agent | Main session |
+| `bug` | An agent-opened bug that meets the §8 conditions, so it enters the flow without `agent-proposed` | Main session |
 | `harness` | Changes protected paths only (§5.1); runs through `/ticket` per §3.7 | Human or main session |
 | `main-ci-failure` | Reports a failed CI run on `main`; `/next` uses it to find earlier reports | Main session |
 
@@ -239,14 +240,21 @@ There is no separate state file. Resuming decides from the actual state (`/ticke
 | Unclear spec (default) | Backlog | `spec-needed` | Finish with the most conservative approach; list the assumption and ticket id in the PR "Assumptions" section |
 | Unclear spec with no conservative approach | Todo | `spec-needed` | implementer returns `blocked` → original ticket gets `needs-human` and is blocked by the new ticket |
 | Out-of-scope enhancement / refactor | Backlog | `agent-proposed` | Does not affect merging |
-| Out-of-scope bug | Todo | `agent-proposed` | Does not affect merging |
+| Out-of-scope bug that meets the conditions below | Todo | `bug` | Does not affect merging |
+| Any other out-of-scope bug | Todo | `agent-proposed` | Does not affect merging |
 | Failed CI run on `main` (§3.3) | Todo, Urgent | `agent-proposed`, `main-ci-failure` | No original ticket; assigned to you |
+
+A bug opened by `/ticket` gets `bug` instead of `agent-proposed` only when all of these hold:
+- It has every Definition of Ready section (§2.3).
+- It states actual behavior, expected behavior and steps to reproduce.
+- Its scope has no protected path (§5.1).
+- Its source ticket does not have the `harness:created-by-agent` marker, so agent-opened bugs cannot chain.
 
 "Most conservative approach": do only what the ticket states; do not change existing public interfaces; do not add packages or change config files and data formats; among several readings, pick the smallest change. Only when none of these can be met is there "no conservative approach".
 
 Volume limits and identification:
 - Before creating, search for similar tickets with `list_issues`. If one exists, add a comment instead. Open at most 3 per run.
-- Tickets opened by an agent start with `<!-- harness:created-by-agent source=YOU-n -->` and always carry `agent-proposed` or `spec-needed`.
+- Tickets opened by an agent start with `<!-- harness:created-by-agent source=YOU-n -->` and carry `agent-proposed` or `spec-needed`, except a bug that gets `bug` under the conditions above. `/retro` and `main-ci-failure` tickets always carry `agent-proposed`.
 - A ticket for a failed CI run on `main` has no source ticket. It takes `YOU-n` from the failing commit subject, or uses `source=main` if there is none. Its body has only the failure details, so a human adds the Definition of Ready sections (§2.3) before removing `agent-proposed`.
 - A new ticket whose scope is protected paths only also gets `harness`.
 - `agent-proposed` / `spec-needed` tickets are not processed automatically. They enter the flow after you remove the label.
