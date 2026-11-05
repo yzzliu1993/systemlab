@@ -120,14 +120,14 @@ Before selecting, `/next` updates local `main` with `git pull --ff-only`, and fi
 
 Always skip `needs-human`, `spec-needed`, `agent-proposed` and `draft`.
 
-The CI check selects the newest run of the `CI` workflow on `main` whose conclusion is not `cancelled`. It stops there if that run succeeded or has not finished. For a failed run, the first match below applies:
+The CI check selects the newest run of the `CI` workflow on `main` whose conclusion is not `cancelled`. A run has failed if its conclusion is `failure`, `timed_out` or `startup_failure`. The check stops there if the run has not finished or has any other conclusion. For a failed run, the first match below applies:
 
 1. A `main-ci-failure` ticket in any state, including Done and Canceled, names the failing commit: do nothing.
 2. The log looks like CI flakiness and `attempt` is 1: rerun once and open no ticket. The next `/next` reads the result.
 3. A `main-ci-failure` ticket is open: add a comment with the commit, run URL and log excerpt.
 4. Otherwise open a ticket per §8.
 
-A failure does not pause work: selection continues as usual, and the final report names what the check did. A `gh` or Linear error is reported, opens no ticket and does not stop `/next`. If only the log cannot be read, the check continues and says so in the ticket or comment.
+A failure does not pause work: selection continues as usual, and the final report names what the check did. A `gh` or Linear error is reported, opens no ticket and does not stop `/next`. If only the log cannot be read or is empty, the check continues and says so in the ticket or comment.
 
 ### 3.4 Notifications
 When you need to act (`awaiting-merge`, `needs-human`), the main session **assigns the ticket to you** and leaves a comment.
@@ -247,7 +247,7 @@ There is no separate state file. Resuming decides from the actual state (`/ticke
 Volume limits and identification:
 - Before creating, search for similar tickets with `list_issues`. If one exists, add a comment instead. Open at most 3 per run.
 - Tickets opened by an agent start with `<!-- harness:created-by-agent source=YOU-n -->` and always carry `agent-proposed` or `spec-needed`.
-- A ticket for a failed CI run on `main` has no source ticket. It takes `YOU-n` from the failing commit subject, or uses `source=main` if there is none.
+- A ticket for a failed CI run on `main` has no source ticket. It takes `YOU-n` from the failing commit subject, or uses `source=main` if there is none. Its body has only the failure details, so a human adds the Definition of Ready sections (§2.3) before removing `agent-proposed`.
 - A new ticket whose scope is protected paths only also gets `harness`.
 - `agent-proposed` / `spec-needed` tickets are not processed automatically. They enter the flow after you remove the label.
 
