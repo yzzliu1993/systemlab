@@ -100,6 +100,11 @@ Read the json at the end of its reply:
 
 1. Run `npm run verify` yourself (do not trust the subagent's report). On failure, give the error output to the implementer to redo; this counts as one failure.
 2. Confirm there are new commits (`git log origin/main..HEAD --oneline` is not empty) and `git status --porcelain` is clean.
+   Then reread the ticket, because a pause during the run can leave the body or comments changed. Get the body with `mcp__linear__get_issue` and the comments with `mcp__linear__list_comments`. If either read fails, report the error and stop without pushing.
+   - Ignore comments that start with `<!-- harness:`. Compare the body with the one from step 0, and check every other comment against the commits. Step 0 does not read comments, so there is no earlier list to compare with, but a comment the commits already satisfy changes nothing.
+   - Nothing changes the work → continue with item 3.
+   - The work must change and the commits can stay as a base → go back to 3 to update the work, using the new body and comments as the task. This does not count as a failure.
+   - The body or a comment conflicts with the commits, for example a commit does what the ticket no longer asks → do not push. Jump to "Hand off to a human" and report the difference.
 3. **`harness` label:** run `git diff --no-renames --name-only origin/main...HEAD`. If any file is outside the protected paths in step 8, do not push. Jump to "Hand off to a human" and name those files.
 4. `git push -u origin <branch>` (`--force` is **forbidden**).
 5. If there is no PR yet, create one:
