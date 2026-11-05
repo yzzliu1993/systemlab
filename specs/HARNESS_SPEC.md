@@ -160,6 +160,11 @@ A ticket with the `harness` label changes protected paths (§5.1) only. `impleme
 - Guard: before pushing, the main session checks the diff. A file outside the protected paths stops the run and hands off to a human, so the main session never writes product code.
 - Merging: the PR changes a protected path, so a human merges it.
 - A change that needs both protected paths and other files is split into two tickets.
+- Permission files: `.claude/settings.json` and `.claude/settings.local.json` control the harness's own permissions, so the main session never edits them. A human proposes and makes the edit. This is separate from §11.1, because these are repo files and go through a PR, but a human proposes and approves in both.
+  - A ticket that changes a permission file changes nothing else, so the change has its own PR.
+  - With no edit yet, `/ticket` hands off to a human at step 3 and names the edit the ticket asks for.
+  - When the edit is the only dirty file, the skill check and step 2 continue instead of stopping. The run branches from `origin/main`, commits the edit unchanged and continues with step 4. Any other dirty file stops the run.
+  - Rework that changes the file goes back to the human.
 
 ---
 

@@ -24,7 +24,7 @@ The three dots show only what `main` changed since this branch left it, so a bra
 
 - Exit code 0 → the skill is current. Continue with step 0.
 - Exit code 1 → the skill differs:
-  1. If `git status --porcelain` is not empty, report that the skill is out of date and the working directory is not clean, then stop. Do not stash or discard anything.
+  1. If `git status --porcelain` is not empty, report that the skill is out of date and the working directory is not clean, then stop. Do not stash or discard anything. Exception: on a permission file ticket (step 3), read the ticket, and if the only dirty file is that ticket's permission file, continue with item 2. The edit stays in the working directory.
   2. Note the current branch, or the commit if `HEAD` is detached, then run `git switch main && git pull --ff-only`. If this fails, report the error and stop.
   3. Read `.claude/skills/ticket/SKILL.md` with the Read tool and follow that version from here on, not the text you loaded. If you were not on `main`, switch back to what you noted.
 - Any other result, such as a failed fetch → report the error and stop.
@@ -77,16 +77,22 @@ If the PR is open, get onto its branch before you continue, whichever row applie
 
 ## 2. Prepare the branch
 
-1. The working directory must be clean (`git status --porcelain` is empty). If not, stop and tell the user. Do not stash or discard anything.
+1. The working directory must be clean (`git status --porcelain` is empty). If not, stop and tell the user. Do not stash or discard anything. Exception: on a permission file ticket (step 3), the ticket's permission file may be dirty, and `git switch -c` in item 2 carries the edit to the new branch. Any other dirty file still stops the run.
 2. New branch: `<type>/<id>/<slug>`. `type` comes from the labels: Bug→`fix`, Feature→`feat`, Improvement→`refactor`, otherwise `feat`. `slug` is an English phrase from the ticket title (lowercase, hyphenated, at most 5 words).
    ```bash
    git switch -c <branch> origin/main
    ```
-   Existing branch: `git switch <branch> && git pull --ff-only`.
+   Existing branch: `git switch <branch> && git pull --ff-only`. If the switch fails, for example because a carried edit conflicts with newer `origin/main` changes, report the error and stop.
 3. If the ticket is in Todo: `mcp__linear__save_issue` with `state: "In Progress"` and `assignee: "me"`.
 4. Update the progress comment (see "Progress comment").
 
 ## 3. Implement
+
+**Permission file ticket:** a `harness` ticket whose scope is only a permission file, which is `.claude/settings.json` or `.claude/settings.local.json`. This rule comes before the `harness` rule below. Never edit a permission file: a human proposes and makes the edit, so an agent cannot change its own permissions. If a ticket needs a permission file and other files, jump to "Hand off to a human" and ask for it to be split.
+
+- The working directory holds the edit → `git add` that file, commit it unchanged with the convention in `CLAUDE.md`, and continue with 4.
+- No edit yet → run `git switch main` and `git branch -d <branch>`, because the branch has no commits and the rerun creates it again. Then jump to "Hand off to a human", naming the edit the ticket asks for. The human makes the edit in the working directory, removes `needs-human` and reruns `/ticket <ID>`.
+- A "Must fix" or CI failure that needs the file changed → jump to "Hand off to a human". The human commits and pushes the edit on the PR branch, then reruns, because step 1 stops on a dirty working directory or an unpushed commit.
 
 **`harness` label:** do not call `implementer`, because it may not edit protected paths (listed in step 8). Make the changes yourself, from the ticket, the "Must fix" list or the CI failure log, and commit them with the convention in `CLAUDE.md`. Wherever this skill gives `implementer` a task, including a redo in step 4 or a merge in step 7, do that task yourself. Write the `summary`, `tests` and `assumptions` for the PR body yourself. If the spec is too unclear to continue, jump to "Hand off to a human", as `implementer` would return `blocked`. Otherwise continue with 4.
 
