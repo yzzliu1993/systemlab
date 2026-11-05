@@ -82,7 +82,9 @@ If the PR is open, get onto its branch before you continue, whichever row applie
    ```bash
    git switch -c <branch> origin/main
    ```
-   Existing branch: `git switch <branch> && git pull --ff-only`. If the switch fails, for example because a carried edit conflicts with newer `origin/main` changes, report the error and stop.
+   Existing branch: `git switch <branch> && git pull --ff-only`.
+
+   If either command fails, for example because a carried edit conflicts with newer `origin/main` changes, report the error and stop.
 3. If the ticket is in Todo: `mcp__linear__save_issue` with `state: "In Progress"` and `assignee: "me"`.
 4. Update the progress comment (see "Progress comment").
 
