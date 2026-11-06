@@ -166,6 +166,7 @@ A ticket with the `harness` label changes protected paths (§5.1) only. `impleme
 | implementer | Read, Edit, Write, Glob, Grep, Bash | sonnet | 150 |
 | reviewer | Read, Glob, Grep, Bash (read-only git commands only) | sonnet | 60 |
 | decomposer | Read, Glob, Grep | sonnet | 40 |
+| researcher | Read, Glob, Grep, WebSearch, WebFetch | sonnet | 40 |
 
 - Each subagent's last message ends with a json block (format in its definition file). The main session uses it to decide the next step.
 - If `reviewer` leaves out the block, the main session asks once and never infers the verdict. A second miss hands off to a human.
@@ -266,6 +267,7 @@ Volume limits and identification:
     implementer.md
     reviewer.md
     decomposer.md
+    researcher.md
   skills/
     ticket/SKILL.md      # /ticket
     ticket/comments.md   # /ticket comment rules and formats
