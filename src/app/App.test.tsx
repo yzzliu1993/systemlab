@@ -26,6 +26,21 @@ const stageIds = [
   'second-branch',
 ] as const;
 
+describe('App header site name', () => {
+  it('T1: English header shows Shop Lab', () => {
+    render(<App />);
+    const header = within(screen.getByRole('banner'));
+    expect(header.getByText('Shop Lab')).toBeInTheDocument();
+  });
+
+  it('T2: Chinese header shows Shop Lab', () => {
+    useLanguage.setState({ language: 'zh-TW' });
+    render(<App />);
+    const header = within(screen.getByRole('banner'));
+    expect(header.getByText('Shop Lab')).toBeInTheDocument();
+  });
+});
+
 describe('App', () => {
   it('T1: home lists seven stages in order, only the long line is a link', () => {
     render(<App />);
