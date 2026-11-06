@@ -65,8 +65,8 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('game-area')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: en['lesson.term.heading'] }),
-    ).toBeInTheDocument();
+      screen.queryByRole('heading', { name: en['lesson.term.heading'] }),
+    ).toBeNull();
   });
 
   it('T3: switching to Chinese changes text and lang', async () => {

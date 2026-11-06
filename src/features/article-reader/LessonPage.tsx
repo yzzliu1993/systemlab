@@ -1,4 +1,5 @@
-import GameArenaPreview from '@/features/game-arena/GameArenaPreview';
+import { useState } from 'react';
+import GameArena from '@/features/game-arena/GameArena';
 import { useT } from '@/stores/language';
 
 const paragraphs = [
@@ -11,6 +12,8 @@ const terms = ['lb', 'server', 'request'];
 
 export default function LessonPage() {
   const t = useT();
+  const [revealed, setRevealed] = useState(false);
+  const reveal = () => setRevealed(true);
 
   return (
     <article className="flex flex-col gap-8">
@@ -33,23 +36,25 @@ export default function LessonPage() {
           </p>
         ))}
       </section>
-      <GameArenaPreview />
-      <section aria-labelledby="term-heading">
-        <h2 id="term-heading" className="text-2xl font-bold">
-          {t('lesson.term.heading')}
-        </h2>
-        <p className="mt-1">{t('lesson.term.intro')}</p>
-        <dl className="mt-3 flex flex-col gap-3">
-          {terms.map((term) => (
-            <div key={term} className="rounded-lg bg-white p-3">
-              <dt className="font-bold text-[#0F5C58]">
-                {t(`lesson.term.${term}.name`)}
-              </dt>
-              <dd>{t(`lesson.term.${term}.desc`)}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <GameArena onFinish={reveal} onSkip={reveal} skipped={revealed} />
+      {revealed && (
+        <section aria-labelledby="term-heading">
+          <h2 id="term-heading" className="text-2xl font-bold">
+            {t('lesson.term.heading')}
+          </h2>
+          <p className="mt-1">{t('lesson.term.intro')}</p>
+          <dl className="mt-3 flex flex-col gap-3">
+            {terms.map((term) => (
+              <div key={term} className="rounded-lg bg-white p-3">
+                <dt className="font-bold text-[#0F5C58]">
+                  {t(`lesson.term.${term}.name`)}
+                </dt>
+                <dd>{t(`lesson.term.${term}.desc`)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </article>
   );
 }
