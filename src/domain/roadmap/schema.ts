@@ -7,6 +7,7 @@ const roadmapNodeSchema = z.object({
   title: nonEmpty,
   summary: nonEmpty,
   prerequisites: z.array(nonEmpty),
+  open: z.boolean().optional(),
 });
 
 const roadmapSchema = z
