@@ -11,7 +11,7 @@ You are the orchestrator. You advance the flow and **verify** results. Code goes
 Ticket id: `$ARGUMENTS` (called `<ID>` below; `<id>` is the lowercase form, for example `you-20`). Linear team: `Youzhuliu`. Repo: `yzzliu1993/systemlab`.
 
 ## Supporting files
-These files sit beside this one and load only when read. `comments.md` has which comments count, the review, progress and friction formats, and follow-up ticket rules: read it before the first comment or review check of a run. `resume.md` has the rest of step 1 for a ticket with an open PR. `merge.md` has steps 8 and 9. Read each with `git show origin/main:.claude/skills/ticket/<file>`, never from the working copy, because a resumed run sits on the PR branch and that copy can be older. If the command fails, report the error and stop.
+These files sit beside this one and load only when read. `comments.md` has which comments count, the review, progress and friction formats, and follow-up ticket rules: read it before the first comment or review check of a run. `resume.md` has the rest of step 1 for a ticket with an open PR. `merge.md` has steps 8 and 9. Read each with `git show origin/main:./.claude/skills/ticket/<file>` from the repo root, never from the working copy, because a resumed run sits on the PR branch and that copy can be older. If the command fails, report the error and stop.
 
 ## Before step 0: check that this skill is current
 This skill loads from the working copy, so local `main` may hold an old version. Check first, and change nothing else until this passes:
