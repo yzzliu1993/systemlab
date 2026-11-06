@@ -91,7 +91,7 @@ Todo ──/ticket──▶ In Progress ──implementer──▶ verify ──
                                                                   otherwise ──▶ awaiting-merge ──human merges──▶ Done
 ```
 
-`.claude/skills/ticket/SKILL.md` is the source of truth for step details.
+`.claude/skills/ticket/` is the source of truth for step details: `SKILL.md` holds the main flow, and `comments.md`, `resume.md` and `merge.md` hold the rules it reads when needed.
 
 ### 3.1 Commands
 | Command | Purpose |
@@ -267,6 +267,9 @@ Volume limits and identification:
     decomposer.md
   skills/
     ticket/SKILL.md      # /ticket
+    ticket/comments.md   # /ticket comment rules and formats
+    ticket/resume.md     # /ticket with an open PR
+    ticket/merge.md      # /ticket steps 8 and 9
     next/SKILL.md        # /next
     decompose/SKILL.md   # /decompose
     retro/SKILL.md       # /retro
