@@ -168,7 +168,7 @@ A ticket with the `harness` label changes protected paths (§5.1) only. `impleme
 | decomposer | Read, Glob, Grep | sonnet | 40 |
 | researcher | Read, Glob, Grep, WebSearch, WebFetch | sonnet | 40 |
 
-- Each subagent's last message ends with a json block (format in its definition file). The main session uses it to decide the next step.
+- The last message of `implementer`, `reviewer` and `decomposer` ends with a json block (format in its definition file). The main session uses it to decide the next step. `researcher` ends with the markdown sections in its definition file instead.
 - If `reviewer` leaves out the block, the main session asks once and never infers the verdict. A second miss hands off to a human.
 - Only the main session operates Linear. Subagents do not call Linear tools.
 - Forbidden actions (written in `CLAUDE.md` and the subagent definitions; enforced by `permissions.deny` in `.claude/settings.json`): `gh pr merge --admin`, `git push --force`, pushing to `main`, `git reset --hard`.
