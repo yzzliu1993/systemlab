@@ -27,6 +27,7 @@
 | **implementer** | `.claude/agents/implementer.md` | Implementing and writing tests on the branch, running `npm run verify`, committing | Pushing, PRs, Linear |
 | **reviewer** | `.claude/agents/reviewer.md` | Read-only review of whether the diff meets the acceptance criteria and test scenarios | Modifying anything |
 | **decomposer** | `.claude/agents/decomposer.md` | Read-only repo exploration and proposing sub-tickets | Creating tickets (the main session does that) |
+| **researcher** | `.claude/agents/researcher.md` | Read-only outside research the main session calls by hand, returning conclusions with source URLs | Changing files, Linear, pushing, merging |
 | **CI** | GitHub Actions `verify` job | `npm ci && npm run verify` | — |
 | **Human** | You | Opening tickets, deciding on `agent-proposed`, answering `spec-needed`, handling `needs-human`, **pressing merge on PRs that do not qualify for auto-merge** | — |
 
