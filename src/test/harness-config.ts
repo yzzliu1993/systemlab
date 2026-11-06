@@ -108,3 +108,19 @@ export function checkProtectedPaths(files: Record<string, string>): string[] {
   }
   return problems;
 }
+
+export function countLines(content: string): number {
+  if (content === '') return 0;
+  const breaks = content.split('\n').length - 1;
+  return content.endsWith('\n') ? breaks : breaks + 1;
+}
+
+export function checkLineBudget(
+  file: string,
+  content: string,
+  limit: number,
+): string[] {
+  const lines = countLines(content);
+  if (lines <= limit) return [];
+  return [`${file}: ${lines} lines is over the limit of ${limit} lines`];
+}

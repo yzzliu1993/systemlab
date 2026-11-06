@@ -1,8 +1,10 @@
 import {
   checkDorHeadings,
+  checkLineBudget,
   checkFrontmatter,
   checkProtectedPaths,
   checkSettings,
+  countLines,
 } from './harness-config';
 
 const skills = import.meta.glob<string>('/.claude/skills/*/SKILL.md', {
@@ -30,6 +32,10 @@ const get = (m: Record<string, string>, path: string): string => {
   if (v === undefined) throw new Error(`missing file ${path}`);
   return v;
 };
+
+const CLAUDE_MD_LIMIT = 200;
+const SKILL_LIMIT = 300;
+const AGENT_LIMIT = 100;
 
 function runAll(): string[] {
   const problems: string[] = [];
@@ -63,6 +69,13 @@ function runAll(): string[] {
       ),
     }),
   );
+  problems.push(
+    ...checkLineBudget('CLAUDE.md', get(docs, '/CLAUDE.md'), CLAUDE_MD_LIMIT),
+  );
+  for (const [f, c] of Object.entries(skills))
+    problems.push(...checkLineBudget(f, c, SKILL_LIMIT));
+  for (const [f, c] of Object.entries(agents))
+    problems.push(...checkLineBudget(f, c, AGENT_LIMIT));
   return problems;
 }
 
@@ -156,5 +169,40 @@ describe('harness config', () => {
       problems.some((p) => p.includes('B.md') && p.includes('package.json')),
     ).toBe(true);
     expect(checkProtectedPaths({ 'A.md': good, 'B.md': good })).toEqual([]);
+  });
+});
+
+describe('md line budgets and path copies', () => {
+  const CRLF = String.fromCharCode(13, 10);
+  const lines = (n: number, eol = '\n') =>
+    Array.from({ length: n }, () => 'line').join(eol) + eol;
+
+  it('T1: file under its limit returns no problem', () => {
+    expect(checkLineBudget('a.md', lines(5), 10)).toEqual([]);
+  });
+
+  it('T2: file exactly at its limit returns no problem (LF and CRLF)', () => {
+    expect(countLines(lines(10))).toBe(10);
+    expect(countLines(lines(10, CRLF))).toBe(10);
+    expect(checkLineBudget('a.md', lines(10), 10)).toEqual([]);
+    expect(checkLineBudget('a.md', lines(10, CRLF), 10)).toEqual([]);
+  });
+
+  it('T3: file one line over names the file and limit', () => {
+    for (const eol of ['\n', CRLF]) {
+      const problems = checkLineBudget('big.md', lines(11, eol), 10);
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toContain('big.md');
+      expect(problems[0]).toContain('10');
+    }
+  });
+
+  it('T4: copy missing one protected path names the file and entry', () => {
+    const good = pathsLine(PATHS);
+    const bad = pathsLine(PATHS.filter((p) => p !== 'tsconfig*'));
+    const problems = checkProtectedPaths({ 'A.md': good, 'B.md': bad });
+    expect(
+      problems.some((p) => p.includes('B.md') && p.includes('tsconfig*')),
+    ).toBe(true);
   });
 });
