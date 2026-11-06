@@ -3,6 +3,16 @@ import { nextRandom } from '@/domain/game/rng';
 export const STRATEGIES = ['inTurn', 'shortest', 'manual'] as const;
 export type Strategy = (typeof STRATEGIES)[number];
 
+export const ARRIVAL_SPEEDS = ['slow', 'normal', 'fast'] as const;
+export type ArrivalSpeed = (typeof ARRIVAL_SPEEDS)[number];
+
+/** Multiplier on the arrival rate. Normal is the tuned setting. */
+export const ARRIVAL_MULTIPLIERS: Record<ArrivalSpeed, number> = {
+  slow: 0.6,
+  normal: 1,
+  fast: 1.4,
+};
+
 export type OrderKind = 'drink' | 'combo' | 'family' | 'takeout';
 
 export type Customer = {
@@ -185,10 +195,15 @@ function work(counter: Counter): { counter: Counter; served: number } {
   };
 }
 
-function maybeArrive(state: GameState, now: number): GameState {
+function maybeArrive(
+  state: GameState,
+  now: number,
+  speed: ArrivalSpeed,
+): GameState {
   const config = state.config;
   const roll = nextRandom(state.rng);
-  if (roll.value >= arrivalRate(config, now) / config.ticksPerSecond) {
+  const rate = arrivalRate(config, now) * ARRIVAL_MULTIPLIERS[speed];
+  if (roll.value >= rate / config.ticksPerSecond) {
     return { ...state, rng: roll.state };
   }
   const pick = nextRandom(roll.state);
@@ -223,12 +238,16 @@ function maybeArrive(state: GameState, now: number): GameState {
   };
 }
 
-/** Advance the game by one fixed tick using the chosen strategy. */
-export function tick(state: GameState, strategy: Strategy): GameState {
+/** Advance the game by one fixed tick using the chosen strategy and arrival speed. */
+export function tick(
+  state: GameState,
+  strategy: Strategy,
+  speed: ArrivalSpeed = 'normal',
+): GameState {
   if (state.done) return state;
   const now = state.tick + 1;
-  // Random draws do not depend on the strategy, so strategies face the same crowd.
-  let next = route(maybeArrive({ ...state, tick: now }, now), strategy);
+  // Random draws do not depend on the strategy or the speed, so strategies face the same crowd.
+  let next = route(maybeArrive({ ...state, tick: now }, now, speed), strategy);
 
   let servedNow = 0;
   const counters = next.counters.map((counter) => {
@@ -272,8 +291,9 @@ export function runRound(
   seed: number,
   strategy: Strategy,
   config: GameConfig = DEFAULT_CONFIG,
+  speed: ArrivalSpeed = 'normal',
 ): GameState {
   let state = createGame(seed, config);
-  while (!state.done) state = tick(state, strategy);
+  while (!state.done) state = tick(state, strategy, speed);
   return state;
 }

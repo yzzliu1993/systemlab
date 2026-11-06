@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  ARRIVAL_SPEEDS,
   STRATEGIES,
   assignNext,
   createGame,
@@ -7,6 +8,7 @@ import {
   tick,
 } from '@/domain/game/lunchRush';
 import type {
+  ArrivalSpeed,
   Customer,
   GameState,
   OrderKind,
@@ -79,10 +81,13 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
   const [round, setRound] = useState(0);
   const [game, setGame] = useState<GameState>(() => createGame(FIRST_SEED));
   const [strategy, setStrategy] = useState<Strategy>('inTurn');
+  const [speed, setSpeed] = useState<ArrivalSpeed>('normal');
   const strategyRef = useRef<Strategy>(strategy);
+  const speedRef = useRef<ArrivalSpeed>(speed);
   const finishRef = useRef(onFinish);
   useEffect(() => {
     strategyRef.current = strategy;
+    speedRef.current = speed;
     finishRef.current = onFinish;
   });
   const phase: Phase = started === 'playing' && game.done ? 'result' : started;
@@ -90,10 +95,25 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
   useEffect(() => {
     if (phase !== 'playing') return;
     const id = setInterval(() => {
-      setGame((current) => tick(current, strategyRef.current));
+      setGame((current) =>
+        tick(current, strategyRef.current, speedRef.current),
+      );
     }, TICK_MS);
     return () => clearInterval(id);
   }, [phase]);
+
+  const byHand = phase === 'playing' && strategy === 'manual';
+  useEffect(() => {
+    if (!byHand) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      const index = ['1', '2', '3'].indexOf(event.key);
+      if (index < 0) return;
+      setGame((current) => assignNext(current, index));
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [byHand]);
 
   useEffect(() => {
     if (phase === 'result') finishRef.current();
@@ -171,9 +191,33 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
             </p>
           </div>
 
+          <div role="group" aria-labelledby="speed-label">
+            <p id="speed-label" className="font-semibold">
+              {t('lesson.game.speed.label')}
+            </p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {ARRIVAL_SPEEDS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={speed === key}
+                  onClick={() => setSpeed(key)}
+                  className={`${buttonBase} border-2 border-[#0F5C58] ${
+                    speed === key
+                      ? 'bg-[#0F5C58] text-white'
+                      : 'bg-white text-[#0F5C58]'
+                  }`}
+                >
+                  {t(`lesson.game.speed.${key}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {strategy === 'manual' && (
             <div className="rounded-lg border-2 border-dashed border-[#0F5C58] p-3">
               <p className="font-semibold">{t('lesson.game.waitingSpot')}</p>
+              <p className="text-sm">{t('lesson.game.keysHint')}</p>
               {game.waiting.length === 0 ? (
                 <p className="text-sm">{t('lesson.game.nobody')}</p>
               ) : (
@@ -212,7 +256,8 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
                       }
                       className={`${buttonBase} mt-2 w-full bg-[#D6452F] text-white disabled:opacity-50`}
                     >
-                      {t('lesson.game.sendTo')} {t(info.name)}
+                      {t('lesson.game.sendTo')} {t(info.name)} (
+                      {t('lesson.game.key')} {index + 1})
                     </button>
                   )}
                 </li>

@@ -6,7 +6,11 @@ import {
   stillInShop,
   tick,
 } from '@/domain/game/lunchRush';
-import type { Customer, GameConfig } from '@/domain/game/lunchRush';
+import type {
+  ArrivalSpeed,
+  Customer,
+  GameConfig,
+} from '@/domain/game/lunchRush';
 
 const noArrivals: GameConfig = {
   ...DEFAULT_CONFIG,
@@ -94,6 +98,22 @@ describe('lunch rush simulation', () => {
       const shortest = runRound(seed, 'shortest');
       expect(turn.walkedOut).toBeGreaterThan(0);
       expect(shortest.walkedOut).toBeLessThan(turn.walkedOut);
+    }
+  });
+
+  it('T11: arrivals rise from slow to fast on the same seed and every one is accounted for', () => {
+    const speeds: ArrivalSpeed[] = ['slow', 'normal', 'fast'];
+    for (let seed = 1; seed <= 12; seed += 1) {
+      const rounds = speeds.map((s) =>
+        runRound(seed, 'inTurn', DEFAULT_CONFIG, s),
+      );
+      const [slow, normal, fast] = rounds;
+      expect(slow!.arrivals).toBeLessThan(normal!.arrivals);
+      expect(normal!.arrivals).toBeLessThan(fast!.arrivals);
+      for (const r of rounds) {
+        expect(r.served + r.walkedOut + stillInShop(r)).toBe(r.arrivals);
+      }
+      expect(normal!.arrivals).toBe(runRound(seed, 'inTurn').arrivals);
     }
   });
 });
