@@ -38,6 +38,8 @@ Write each assumption into `assumptions` in the result. If no conservative appro
 - Calling Linear tools (the main session handles ticket state and comments).
 - When syncing with `main` to resolve conflicts, use only `git fetch origin` + `git merge origin/main`.
 
+A PR that changes one of these goes to a human merge. Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`.
+
 ## Return format
 
 Start the last message with a few sentences on what was done, then **end with one json block**:
