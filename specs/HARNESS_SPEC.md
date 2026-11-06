@@ -2,7 +2,6 @@
 
 > v3 moves to a **Claude Code native architecture**: the Claude Code main session is the orchestrator. It reads tickets and changes state through the Linear MCP,
 > and uses subagents in `.claude/agents/` to implement, review and decompose. The flow steps live in `.claude/skills/`.
-> The v2 TypeScript orchestrator (`harness/`, `claude -p`) was removed in YOU-19.
 
 ---
 
@@ -53,8 +52,6 @@
 | `bug` | An agent-opened bug that meets the §8 conditions, so it enters the flow without `agent-proposed` | Main session |
 | `harness` | Changes protected paths only (§5.1); runs through `/ticket` per §3.7 | Human or main session |
 | `main-ci-failure` | Reports a failed CI run on `main`; `/next` uses it to find earlier reports | Main session |
-
-(The v2 `agent:working` label is no longer used and can be deleted in Linear.)
 
 ### 2.3 Ticket format (Definition of Ready)
 A Todo ticket must contain the sections below. If any is missing, the main session does not implement it and adds `needs-human`:
@@ -121,14 +118,7 @@ Before selecting, `/next` updates local `main` with `git pull --ff-only`, and fi
 
 Always skip `needs-human`, `spec-needed`, `agent-proposed` and `draft`.
 
-The CI check selects the newest run of the `CI` workflow on `main` whose conclusion is not `cancelled`. A run has failed if its conclusion is `failure`, `timed_out` or `startup_failure`. The check stops there if the run has not finished or has any other conclusion. For a failed run, the first match below applies:
-
-1. A `main-ci-failure` ticket in any state, including Done and Canceled, names the failing commit: do nothing.
-2. The log looks like CI flakiness and `attempt` is 1: rerun once and open no ticket. The next `/next` reads the result.
-3. A `main-ci-failure` ticket is open: add a comment with the commit, run URL and log excerpt.
-4. Otherwise open a ticket per §8.
-
-A failure does not pause work: selection continues as usual, and the final report names what the check did. A `gh` or Linear error is reported, opens no ticket and does not stop `/next`. If only the log cannot be read or is empty, the check continues and says so in the ticket or comment.
+The CI check decides whether `main` has a failed run that needs a ticket. A failed run opens or updates a `main-ci-failure` ticket per §8. A failure does not pause work: selection continues as usual, and the final report names what the check did. A `gh` or Linear error is reported, opens no ticket and does not stop `/next`. `.claude/skills/next/SKILL.md` step 2 has the steps, including the cases that need no ticket.
 
 ### 3.4 Notifications
 When you need to act (`awaiting-merge`, `needs-human`), the main session **assigns the ticket to you** and leaves a comment.
@@ -179,7 +169,7 @@ A ticket with the `harness` label changes protected paths (§5.1) only. `impleme
 - Each subagent's last message ends with a json block (format in its definition file). The main session uses it to decide the next step.
 - If `reviewer` leaves out the block, the main session asks once and never infers the verdict. A second miss hands off to a human.
 - Only the main session operates Linear. Subagents do not call Linear tools.
-- Forbidden actions (written in `CLAUDE.md` and the subagent definitions; also recommended as `permissions.deny` in `.claude/settings.json`): `gh pr merge --admin`, `git push --force`, pushing to `main`, `git reset --hard`.
+- Forbidden actions (written in `CLAUDE.md` and the subagent definitions; enforced by `permissions.deny` in `.claude/settings.json`): `gh pr merge --admin`, `git push --force`, pushing to `main`, `git reset --hard`.
 - Merging is forbidden outside §5.1. Subagents never merge. `.claude/settings.json` allows only the `--squash` form.
 
 ---
