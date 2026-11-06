@@ -100,6 +100,9 @@ describe('LessonPage game', () => {
     waitForCustomer();
     expect(screen.queryByText(en['lesson.game.nobody'])).toBeNull();
     expect(counterLines()).toEqual([0, 0, 0]);
+    // Holding a key sends repeat events, which must not send customers.
+    fireEvent.keyDown(window, { key: '2', repeat: true });
+    expect(counterLines()).toEqual([0, 0, 0]);
     fireEvent.keyDown(window, { key: '2' });
     expect(counterLines()).toEqual([0, 1, 0]);
   });
@@ -124,24 +127,62 @@ describe('LessonPage game', () => {
     expect(counterLines()).toEqual(waiting);
   });
 
-  it('T14: changing arrival speed during a round keeps the round running', async () => {
-    const user = userEvent.setup();
-    render(<LessonPage />);
-    await user.click(
+  const timeLeft = () =>
+    Number(
+      screen
+        .getByText(new RegExp(`^${en['lesson.game.timeLeft']}`))
+        .textContent!.match(/(\d+)/)![1],
+    );
+  const statValue = (key: 'served' | 'walkedOut') =>
+    Number(
+      screen
+        .getByText(new RegExp(`^${en[`lesson.game.${key}`]}:`))
+        .textContent!.split(':')[1],
+    );
+  const arrived = () =>
+    statValue('served') +
+    statValue('walkedOut') +
+    counterLines().reduce((sum, n) => sum + n, 0);
+  const runWithSpeed = (speed: 'slow' | 'fast') => {
+    vi.useFakeTimers();
+    const view = render(<LessonPage />);
+    fireEvent.click(
       screen.getByRole('button', { name: en['lesson.game.start'] }),
     );
-    const fast = screen.getByRole('button', {
-      name: en['lesson.game.speed.fast'],
+    act(() => {
+      vi.advanceTimersByTime(5_000);
     });
-    const normal = screen.getByRole('button', {
-      name: en['lesson.game.speed.normal'],
+    const leftBefore = timeLeft();
+    const arrivedBefore = arrived();
+    const button = screen.getByRole('button', {
+      name: en[`lesson.game.speed.${speed}`],
     });
-    expect(normal).toHaveAttribute('aria-pressed', 'true');
-    await user.click(fast);
-    expect(fast).toHaveAttribute('aria-pressed', 'true');
-    expect(normal).toHaveAttribute('aria-pressed', 'false');
-    expect(
-      screen.getByText(new RegExp(`^${en['lesson.game.timeLeft']}`)),
-    ).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+    // The round is not restarted by the change.
+    expect(timeLeft()).toBe(leftBefore);
+    expect(arrived()).toBe(arrivedBefore);
+    act(() => {
+      vi.advanceTimersByTime(20_000);
+    });
+    const result = {
+      leftBefore,
+      leftAfter: timeLeft(),
+      arrivedBefore,
+      arrivedAfter: arrived(),
+    };
+    view.unmount();
+    vi.useRealTimers();
+    return result;
+  };
+
+  it('T14: changing arrival speed during a round applies it without restarting', () => {
+    const slow = runWithSpeed('slow');
+    const fast = runWithSpeed('fast');
+    expect(slow.arrivedBefore).toBe(fast.arrivedBefore);
+    expect(slow.leftAfter).toBeLessThan(slow.leftBefore);
+    expect(fast.leftAfter).toBeLessThan(fast.leftBefore);
+    expect(slow.arrivedAfter).toBeGreaterThanOrEqual(slow.arrivedBefore);
+    expect(fast.arrivedAfter).toBeGreaterThan(slow.arrivedAfter);
   });
 });

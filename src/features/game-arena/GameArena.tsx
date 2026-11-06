@@ -106,7 +106,8 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
   useEffect(() => {
     if (!byHand) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey)
+        return;
       const index = ['1', '2', '3'].indexOf(event.key);
       if (index < 0) return;
       setGame((current) => assignNext(current, index));
