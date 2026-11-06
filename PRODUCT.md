@@ -12,7 +12,7 @@ Working site name: Shop Lab (may change).
 
 - The setting is a small food shop that keeps growing.
 - Each concept is a new problem the shop meets as it grows.
-- Every lesson ties back to the shop. Do not add problems that have no shop story.
+- Tie each lesson back to the shop where it fits. A concept with no natural shop story can still be taught.
 
 ## Lesson rhythm
 
