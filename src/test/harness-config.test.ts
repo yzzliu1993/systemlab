@@ -67,6 +67,10 @@ function runAll(): string[] {
         skills,
         '/.claude/skills/ticket/SKILL.md',
       ),
+      '.claude/agents/implementer.md': get(
+        agents,
+        '/.claude/agents/implementer.md',
+      ),
     }),
   );
   problems.push(
@@ -203,6 +207,21 @@ describe('md line budgets and path copies', () => {
     const problems = checkProtectedPaths({ 'A.md': good, 'B.md': bad });
     expect(
       problems.some((p) => p.includes('B.md') && p.includes('tsconfig*')),
+    ).toBe(true);
+  });
+
+  it('T2: implementer.md copy missing one path names the file and entry', () => {
+    const good = pathsLine(PATHS);
+    const bad = pathsLine(PATHS.filter((p) => p !== 'specs/'));
+    const problems = checkProtectedPaths({
+      'CLAUDE.md': good,
+      '.claude/agents/implementer.md': bad,
+    });
+    expect(
+      problems.some(
+        (p) =>
+          p.includes('.claude/agents/implementer.md') && p.includes('specs/'),
+      ),
     ).toBe(true);
   });
 });
