@@ -126,9 +126,13 @@ describe('least work scenario', () => {
 
   it('T1: least work joins the counter that finishes soonest, not the one with the fewest people', () => {
     let state = createGame(1, noArrivals);
-    // Counter 1 (speed 4): 2 people, 8 work. Counter 2 (speed 2): 2 people, 56 work.
-    // Counter 3 (speed 1): 1 person, 30 work, so the fewest people but the slowest to finish.
-    const sizes = [[4, 4], [28, 28], [30]];
+    // Every line has 2 people. Time to finish: counter 1 is 56/4 = 14,
+    // counter 2 is 8/2 = 4, counter 3 is 20/1 = 20.
+    const sizes = [
+      [28, 28],
+      [4, 4],
+      [10, 10],
+    ];
     state = {
       ...state,
       counters: state.counters.map((c, i) => ({
@@ -137,8 +141,11 @@ describe('least work scenario', () => {
       })),
       waiting: [customer(99, 10)],
     };
-    state = tick(state, 'leastWork');
-    expect(state.counters.map((c) => c.taken)).toEqual([1, 0, 0]);
+    const byPeople = tick(state, 'shortest');
+    const byWork = tick(state, 'leastWork');
+    // A head count ties and picks counter 1; least work picks counter 2.
+    expect(byPeople.counters.map((c) => c.taken)).toEqual([1, 0, 0]);
+    expect(byWork.counters.map((c) => c.taken)).toEqual([0, 1, 0]);
   });
 
   it('T1: remaining work counts the customer being served', () => {
