@@ -80,5 +80,15 @@
   "lesson.term.server.name": "Server",
   "lesson.term.server.desc": "A counter is a server. It is a machine that does the work.",
   "lesson.term.request.name": "Request",
-  "lesson.term.request.desc": "A customer is a request. It is one piece of work that arrives and needs an answer."
+  "lesson.term.request.desc": "A customer is a request. It is one piece of work that arrives and needs an answer.",
+  "lesson.diagram.title": "From the shop to the system",
+  "lesson.diagram.desc": "Top row, in the shop: customers are directed by one person to the counters. Bottom row, in the system: requests are directed by a Load Balancer to servers. Dotted lines without arrows link each shop part to the system part that is the same thing.",
+  "lesson.diagram.row.shop": "In the shop",
+  "lesson.diagram.row.system": "In the system",
+  "lesson.diagram.customers": "Customers",
+  "lesson.diagram.director": "The person directing",
+  "lesson.diagram.counters": "Counters",
+  "lesson.diagram.requests": "Requests",
+  "lesson.diagram.lb": "Load Balancer",
+  "lesson.diagram.servers": "Servers"
 }
