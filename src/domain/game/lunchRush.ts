@@ -1,6 +1,6 @@
 import { nextRandom } from '@/domain/game/rng';
 
-export const STRATEGIES = ['inTurn', 'shortest', 'manual'] as const;
+export const STRATEGIES = ['inTurn', 'shortest', 'leastWork', 'manual'] as const;
 export type Strategy = (typeof STRATEGIES)[number];
 
 export const ARRIVAL_SPEEDS = ['slow', 'normal', 'fast'] as const;
@@ -70,6 +70,27 @@ export const DEFAULT_CONFIG: GameConfig = {
   patienceMax: 140,
 };
 
+/** A short live round for the by hand step. */
+export const BY_HAND_CONFIG: GameConfig = {
+  ...DEFAULT_CONFIG,
+  roundTicks: 200,
+  peakAtTick: 120,
+  peakHalfWidthTicks: 100,
+};
+
+/** The takeout rush: big orders become far more common. */
+export const TAKEOUT_RUSH_CONFIG: GameConfig = {
+  ...DEFAULT_CONFIG,
+  orders: [
+    { kind: 'drink', size: 4, weight: 50 },
+    { kind: 'combo', size: 14, weight: 25 },
+    { kind: 'family', size: 28, weight: 5 },
+    { kind: 'takeout', size: 64, weight: 20 },
+  ],
+  baseRate: 1.2,
+  peakRate: 5.4,
+};
+
 export type GameState = {
   config: GameConfig;
   tick: number;
@@ -121,6 +142,31 @@ export function lineLength(counter: Counter): number {
   return counter.queue.length + (counter.serving ? 1 : 0);
 }
 
+/** Work still to do at a counter: the order being served plus everything queued. */
+export function remainingWork(counter: Counter): number {
+  return (
+    (counter.serving?.remaining ?? 0) +
+    counter.queue.reduce((sum, c) => sum + c.size, 0)
+  );
+}
+
+/**
+ * The counter that has taken the most work for its speed (work / speed).
+ * Ties go to the lowest counter number.
+ */
+export function furthestBehind(counters: readonly Counter[]): number {
+  let index = 0;
+  let worst = -Infinity;
+  counters.forEach((counter, i) => {
+    const load = counter.work / counter.speed;
+    if (load > worst) {
+      worst = load;
+      index = i;
+    }
+  });
+  return index;
+}
+
 function join(counter: Counter, customer: Customer): Counter {
   return {
     ...counter,
@@ -155,10 +201,15 @@ function route(state: GameState, strategy: Strategy): GameState {
       index = next.nextTurn % next.counters.length;
       next = { ...next, nextTurn: next.nextTurn + 1 };
     } else {
+      // Shortest counts people. Least work counts the time until each counter is free.
+      const measure =
+        strategy === 'leastWork'
+          ? (c: Counter) => remainingWork(c) / c.speed
+          : lineLength;
+      const loads = next.counters.map(measure);
       index = 0;
-      const lines = next.counters.map(lineLength);
-      lines.forEach((length, i) => {
-        if (length < lines[index]!) index = i;
+      loads.forEach((load, i) => {
+        if (load < loads[index]!) index = i;
       });
     }
     next = {
