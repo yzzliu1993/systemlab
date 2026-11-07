@@ -80,5 +80,15 @@
   "lesson.term.server.name": "Server",
   "lesson.term.server.desc": "一個櫃台就是一台 server（伺服器），也就是真正做事的機器。",
   "lesson.term.request.name": "Request",
-  "lesson.term.request.desc": "一位客人就是一個 request（請求），也就是送來等著被處理的一份工作。"
+  "lesson.term.request.desc": "一位客人就是一個 request（請求），也就是送來等著被處理的一份工作。",
+  "lesson.diagram.title": "從小店到系統",
+  "lesson.diagram.desc": "上排是小店：客人由一個人指引到各個櫃台。下排是系統：request 由 Load Balancer 分給各台 server。上排的每個部分，都對應下方的系統部分。",
+  "lesson.diagram.row.shop": "小店裡",
+  "lesson.diagram.row.system": "系統裡",
+  "lesson.diagram.customers": "客人",
+  "lesson.diagram.director": "指引的人",
+  "lesson.diagram.counters": "櫃台",
+  "lesson.diagram.requests": "Request（請求）",
+  "lesson.diagram.lb": "Load Balancer",
+  "lesson.diagram.servers": "Server（伺服器）"
 }

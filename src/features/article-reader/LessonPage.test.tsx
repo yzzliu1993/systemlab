@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import en from '@/content/locales/en.json';
 import LessonPage from '@/features/article-reader/LessonPage';
+import zh from '@/content/locales/zh-TW.json';
 import { useLanguage } from '@/stores/language';
 
 beforeEach(() => {
@@ -14,6 +15,57 @@ afterEach(() => {
 
 const termHeading = () =>
   screen.queryByRole('heading', { name: en['lesson.term.heading'] });
+
+const diagram = () =>
+  screen.queryByRole('img', { name: en['lesson.diagram.title'] });
+
+describe('LessonPage diagram', () => {
+  it('T1: after a round the diagram shows both rows', async () => {
+    const user = userEvent.setup();
+    render(<LessonPage />);
+    await user.click(
+      screen.getByRole('button', { name: en['lesson.game.skip'] }),
+    );
+    expect(diagram()).toBeInTheDocument();
+    for (const key of [
+      'row.shop',
+      'row.system',
+      'customers',
+      'director',
+      'counters',
+      'requests',
+      'lb',
+      'servers',
+    ] as const) {
+      expect(
+        within(diagram()!).getByText(en[`lesson.diagram.${key}`]),
+      ).toBeInTheDocument();
+    }
+    expect(diagram()).toHaveAccessibleDescription(en['lesson.diagram.desc']);
+  });
+
+  it('T2: before playing no diagram is shown', () => {
+    render(<LessonPage />);
+    expect(diagram()).toBeNull();
+    expect(screen.queryByText(en['lesson.diagram.row.shop'])).toBeNull();
+  });
+
+  it('T3: switching to Chinese changes the diagram labels', async () => {
+    const user = userEvent.setup();
+    render(<LessonPage />);
+    await user.click(
+      screen.getByRole('button', { name: en['lesson.game.skip'] }),
+    );
+    expect(
+      screen.getByText(en['lesson.diagram.customers']),
+    ).toBeInTheDocument();
+    act(() => useLanguage.setState({ language: 'zh-TW' }));
+    expect(
+      screen.getByText(zh['lesson.diagram.customers']),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(en['lesson.diagram.customers'])).toBeNull();
+  });
+});
 
 describe('LessonPage game', () => {
   it('T8: finishing a round shows the result screen and the term section', async () => {
