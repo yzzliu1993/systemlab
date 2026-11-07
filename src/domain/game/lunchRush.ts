@@ -1,6 +1,11 @@
 import { nextRandom } from '@/domain/game/rng';
 
-export const STRATEGIES = ['inTurn', 'shortest', 'leastWork', 'manual'] as const;
+export const STRATEGIES = [
+  'inTurn',
+  'shortest',
+  'leastWork',
+  'manual',
+] as const;
 export type Strategy = (typeof STRATEGIES)[number];
 
 export const ARRIVAL_SPEEDS = ['slow', 'normal', 'fast'] as const;
