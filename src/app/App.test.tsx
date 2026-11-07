@@ -16,16 +16,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const stageIds = [
-  'one-person',
-  'order-window',
-  'more-hands',
-  'long-line',
-  'prep-shelf',
-  'order-rail',
-  'second-branch',
-] as const;
-
 describe('App header site name', () => {
   it('T1: English header shows Shop Lab', () => {
     render(<App />);
@@ -42,14 +32,10 @@ describe('App header site name', () => {
 });
 
 describe('App', () => {
-  it('T1: home lists seven stages in order, only the long line is a link', () => {
+  it('T1: home lists only the long line, as a link', () => {
     render(<App />);
     const main = within(screen.getByRole('main'));
-    const items = main.getAllByRole('listitem');
-    expect(items).toHaveLength(7);
-    stageIds.forEach((id, i) => {
-      expect(items[i]).toHaveTextContent(en[`stage.${id}.title`]);
-    });
+    expect(main.getAllByRole('listitem')).toHaveLength(1);
     const links = main.getAllByRole('link');
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveTextContent(en['stage.long-line.title']);
