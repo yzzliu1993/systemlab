@@ -82,7 +82,7 @@
   "lesson.term.request.name": "Request",
   "lesson.term.request.desc": "一位客人就是一個 request（請求），也就是送來等著被處理的一份工作。",
   "lesson.diagram.title": "從小店到系統",
-  "lesson.diagram.desc": "上排是小店：客人由一個人指引到各個櫃台。下排是系統：request 由 Load Balancer 分給各台 server。上排的每個部分，都對應下方的系統部分。",
+  "lesson.diagram.desc": "上排是小店：客人由一個人指引到各個櫃台。下排是系統：request 由 Load Balancer 分給各台 server。沒有箭頭的點線，把上排的每個部分連到下方代表同一件事的系統部分。",
   "lesson.diagram.row.shop": "小店裡",
   "lesson.diagram.row.system": "系統裡",
   "lesson.diagram.customers": "客人",

@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 export interface DiagramNode {
   id: string;
   label: string;
@@ -12,6 +14,8 @@ export interface DiagramRow {
 export interface DiagramArrow {
   from: string;
   to: string;
+  /** 'flow' (default) is an arrow; 'map' is a dotted line meaning "is the same thing as". */
+  kind?: 'flow' | 'map';
 }
 
 interface FlowDiagramProps {
@@ -40,6 +44,9 @@ export default function FlowDiagram({
   rows,
   arrows,
 }: FlowDiagramProps) {
+  const id = useId();
+  const descId = `${id}-desc`;
+  const markerId = `${id}-arrow`;
   const columns = Math.max(1, ...rows.map((r) => r.nodes.length));
   const width = PAD * 2 + columns * NODE_W + (columns - 1) * GAP_X;
   const rowTop = (i: number) => PAD + i * (LABEL_H + NODE_H + GAP_Y);
@@ -73,22 +80,31 @@ export default function FlowDiagram({
       y1 = down ? a.y + NODE_H : a.y;
       y2 = down ? b.y : b.y + NODE_H;
     }
-    return [{ key: `${arrow.from}-${arrow.to}-${i}`, x1, y1, x2, y2 }];
+    return [
+      {
+        key: `${arrow.from}-${arrow.to}-${i}`,
+        map: arrow.kind === 'map',
+        x1,
+        y1,
+        x2,
+        y2,
+      },
+    ];
   });
 
   return (
     <svg
       role="img"
       aria-label={title}
-      aria-describedby="flow-diagram-desc"
+      aria-describedby={descId}
       viewBox={`0 0 ${width} ${height}`}
       className="mx-auto w-full max-w-4xl"
     >
-      <title id="flow-diagram-title">{title}</title>
-      <desc id="flow-diagram-desc">{description}</desc>
+      <title>{title}</title>
+      <desc id={descId}>{description}</desc>
       <defs>
         <marker
-          id="flow-diagram-arrow"
+          id={markerId}
           viewBox="0 0 10 10"
           refX="9"
           refY="5"
@@ -111,13 +127,15 @@ export default function FlowDiagram({
           {row.label}
         </text>
       ))}
-      {lines.map(({ key, ...l }) => (
+      {lines.map(({ key, map, ...l }) => (
         <line
           key={key}
           {...l}
           stroke="#1F2937"
           strokeWidth="2"
-          markerEnd="url(#flow-diagram-arrow)"
+          strokeDasharray={map ? '2 5' : undefined}
+          strokeLinecap={map ? 'round' : undefined}
+          markerEnd={map ? undefined : `url(#${markerId})`}
         />
       ))}
       {rows.map((row, r) =>

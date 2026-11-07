@@ -15,9 +15,9 @@ const diagramArrows = [
   { from: 'director', to: 'counters' },
   { from: 'requests', to: 'lb' },
   { from: 'lb', to: 'servers' },
-  { from: 'customers', to: 'requests' },
-  { from: 'director', to: 'lb' },
-  { from: 'counters', to: 'servers' },
+  { from: 'customers', to: 'requests', kind: 'map' as const },
+  { from: 'director', to: 'lb', kind: 'map' as const },
+  { from: 'counters', to: 'servers', kind: 'map' as const },
 ];
 
 export default function LessonPage() {

@@ -20,12 +20,15 @@ const diagram = () =>
   screen.queryByRole('img', { name: en['lesson.diagram.title'] });
 
 describe('LessonPage diagram', () => {
-  it('T1: after a round the diagram shows both rows', async () => {
-    const user = userEvent.setup();
+  it('T1: after a finished round the diagram shows both rows', () => {
+    vi.useFakeTimers();
     render(<LessonPage />);
-    await user.click(
-      screen.getByRole('button', { name: en['lesson.game.skip'] }),
+    fireEvent.click(
+      screen.getByRole('button', { name: en['lesson.game.start'] }),
     );
+    act(() => {
+      vi.advanceTimersByTime(61_000);
+    });
     expect(diagram()).toBeInTheDocument();
     for (const key of [
       'row.shop',
