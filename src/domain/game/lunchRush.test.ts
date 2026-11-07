@@ -1,5 +1,6 @@
 import {
   DEFAULT_CONFIG,
+  SCENARIO_SEEDS,
   TAKEOUT_RUSH_CONFIG,
   assignNext,
   createGame,
@@ -188,5 +189,15 @@ describe('least work scenario', () => {
     expect(furthestBehind(tied)).toBe(0);
     const clear = base.map((c, i) => ({ ...c, work: [4, 20, 30][i]! }));
     expect(furthestBehind(clear)).toBe(2);
+  });
+
+  it('T11: every scenario seed shows shortest line failing in the rush and least work recovering', () => {
+    for (const seed of SCENARIO_SEEDS) {
+      const normal = runRound(seed, 'shortest').walkedOut;
+      const rush = runRound(seed, 'shortest', TAKEOUT_RUSH_CONFIG).walkedOut;
+      const least = runRound(seed, 'leastWork', TAKEOUT_RUSH_CONFIG).walkedOut;
+      expect(rush - normal).toBeGreaterThanOrEqual(5);
+      expect(least).toBeLessThanOrEqual(rush / 2);
+    }
   });
 });

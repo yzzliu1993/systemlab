@@ -1,12 +1,14 @@
 import { nextRandom } from '@/domain/game/rng';
 
-export const STRATEGIES = [
-  'inTurn',
-  'shortest',
-  'leastWork',
-  'manual',
-] as const;
-export type Strategy = (typeof STRATEGIES)[number];
+export type Strategy = 'inTurn' | 'shortest' | 'leastWork' | 'manual';
+
+/** Seeds the player sees, in order. Each one shows shortest line failing in the rush. */
+export const SCENARIO_SEEDS: readonly number[] = [11, 10, 9, 2];
+
+/** The seed for the given play-through (0 is the first). It cycles. */
+export function scenarioSeed(round: number): number {
+  return SCENARIO_SEEDS[round % SCENARIO_SEEDS.length]!;
+}
 
 export const ARRIVAL_SPEEDS = ['slow', 'normal', 'fast'] as const;
 export type ArrivalSpeed = (typeof ARRIVAL_SPEEDS)[number];

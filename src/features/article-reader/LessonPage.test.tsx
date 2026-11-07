@@ -5,6 +5,7 @@ import {
   DEFAULT_CONFIG,
   TAKEOUT_RUSH_CONFIG,
   furthestBehind,
+  scenarioSeed,
   runRound,
 } from '@/domain/game/lunchRush';
 import type { Strategy } from '@/domain/game/lunchRush';
@@ -57,7 +58,7 @@ const stages: Stage[] = [
   'eventResult',
 ];
 
-/** Seed 7 is the first round; each restart adds one. */
+/** The first round uses the first scenario seed; each restart moves to the next. */
 const behindFor = (seed: number, rule: Strategy) =>
   furthestBehind(runRound(seed, rule, DEFAULT_CONFIG).counters);
 
@@ -71,7 +72,7 @@ function playTo(stage: Stage, opts: { guess?: number; seed?: number } = {}) {
   advance(20_500);
   press(en['lesson.game.strategy.inTurn']);
   if (!reach('watch')) return;
-  const guess = opts.guess ?? behindFor(opts.seed ?? 7, 'inTurn');
+  const guess = opts.guess ?? behindFor(opts.seed ?? scenarioSeed(0), 'inTurn');
   press(en[`lesson.game.counter${guess + 1}` as Key]);
   press(en['lesson.game.choose.watch']);
   if (!reach('result')) return;
@@ -188,18 +189,30 @@ describe('LessonPage scenario', () => {
   it('T7: the page says the prediction was right, then wrong', () => {
     vi.useFakeTimers();
     render(<LessonPage />);
-    playTo('result', { guess: behindFor(7, 'inTurn') });
+    playTo('result', { guess: behindFor(scenarioSeed(0), 'inTurn') });
     expect(
       screen.getByText(en['lesson.game.result.right']),
     ).toBeInTheDocument();
     expect(screen.queryByText(en['lesson.game.result.wrong'])).toBeNull();
 
     press(en['lesson.game.restart']);
-    playTo('result', { guess: (behindFor(8, 'inTurn') + 1) % 3 });
+    playTo('result', { guess: (behindFor(scenarioSeed(1), 'inTurn') + 1) % 3 });
     expect(
       screen.getByText(en['lesson.game.result.wrong']),
     ).toBeInTheDocument();
     expect(screen.queryByText(en['lesson.game.result.right'])).toBeNull();
+  });
+
+  it('Extra: start again uses the next scenario seed', () => {
+    vi.useFakeTimers();
+    render(<LessonPage />);
+    playTo('result');
+    press(en['lesson.game.restart']);
+    playTo('result', { seed: scenarioSeed(1) });
+    const expected = runRound(scenarioSeed(1), 'inTurn', DEFAULT_CONFIG);
+    expect(
+      screen.getByText(`${en['lesson.game.walkedOut']}: ${expected.walkedOut}`),
+    ).toBeInTheDocument();
   });
 
   it('T8: by hand, pressing 2 sends the next customer to counter 2', () => {
@@ -274,7 +287,7 @@ describe('LessonPage scenario', () => {
       playTo('watch');
       expect(stepHeading('result')).toBeInTheDocument();
       expect(screen.queryByText(en['lesson.game.watch.running'])).toBeNull();
-      const expected = runRound(7, 'inTurn', DEFAULT_CONFIG);
+      const expected = runRound(scenarioSeed(0), 'inTurn', DEFAULT_CONFIG);
       expect(
         screen.getByText(
           `${en['lesson.game.walkedOut']}: ${expected.walkedOut}`,
@@ -326,8 +339,8 @@ describe('LessonPage scenario', () => {
     vi.useFakeTimers();
     render(<LessonPage />);
     playTo('eventResult');
-    const normal = runRound(7, 'inTurn', DEFAULT_CONFIG);
-    const rush = runRound(7, 'leastWork', TAKEOUT_RUSH_CONFIG);
+    const normal = runRound(scenarioSeed(0), 'inTurn', DEFAULT_CONFIG);
+    const rush = runRound(scenarioSeed(0), 'leastWork', TAKEOUT_RUSH_CONFIG);
     const [first, second] = screen.getAllByRole('table');
     const walked = en['lesson.game.walkedOut'];
     expect(first!.parentElement).toHaveTextContent(

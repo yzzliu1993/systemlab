@@ -6,6 +6,7 @@ import {
   assignNext,
   createGame,
   furthestBehind,
+  scenarioSeed,
   runRound,
   tick,
 } from '@/domain/game/lunchRush';
@@ -30,7 +31,6 @@ import ResultTable from './ResultTable';
 const TICK_MS = 100;
 /** The watch steps play a 600 tick round in about 6 seconds. */
 const FAST_TICKS_PER_STEP = 10;
-const FIRST_SEED = 7;
 
 const NORMAL_RULES: readonly Strategy[] = ['inTurn', 'shortest'];
 const EVENT_RULES: readonly Strategy[] = ['inTurn', 'shortest', 'leastWork'];
@@ -65,7 +65,7 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
   const [rawStep, setStep] = useState<Step>('intro');
   const [round, setRound] = useState(0);
   const [game, setGame] = useState<GameState>(() =>
-    createGame(FIRST_SEED, BY_HAND_CONFIG),
+    createGame(scenarioSeed(0), BY_HAND_CONFIG),
   );
   const [speed, setSpeed] = useState<ArrivalSpeed>('normal');
   const [rule, setRule] = useState<Strategy>('inTurn');
@@ -80,7 +80,7 @@ export default function GameArena({ onFinish, onSkip, skipped }: Props) {
     finishRef.current = onFinish;
   });
 
-  const seed = FIRST_SEED + round;
+  const seed = scenarioSeed(round);
   // A round that has run out of time moves on by itself.
   let step = rawStep;
   if (game.done) {
