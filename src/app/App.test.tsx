@@ -17,17 +17,17 @@ afterEach(() => {
 });
 
 describe('App header site name', () => {
-  it('T1: English header shows Shop Lab', () => {
+  it('T1: English header shows System Design', () => {
     render(<App />);
     const header = within(screen.getByRole('banner'));
-    expect(header.getByText('Shop Lab')).toBeInTheDocument();
+    expect(header.getByText('System Design')).toBeInTheDocument();
   });
 
-  it('T2: Chinese header shows Shop Lab', () => {
+  it('T2: Chinese header shows System Design', () => {
     useLanguage.setState({ language: 'zh-TW' });
     render(<App />);
     const header = within(screen.getByRole('banner'));
-    expect(header.getByText('Shop Lab')).toBeInTheDocument();
+    expect(header.getByText('System Design')).toBeInTheDocument();
   });
 });
 
