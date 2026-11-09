@@ -6,14 +6,14 @@ import {
   createGame,
   lineLength,
   tick,
-} from '@/domain/game/lunchRush';
+} from '@/features/game-arena/legacyLunchRush';
 import type {
   ArrivalSpeed,
   Customer,
   GameState,
   OrderKind,
   Strategy,
-} from '@/domain/game/lunchRush';
+} from '@/features/game-arena/legacyLunchRush';
 import { useT } from '@/stores/language';
 
 const TICK_MS = 100;

@@ -1,4 +1,7 @@
-import { nextRandom } from '@/domain/game/rng';
+// Temporary home of the old lunch rush engine so the game UI keeps working.
+// The load balancing simulation lives in @/domain/simulation/loadBalancer.
+// Delete this file together with the game UI.
+import { nextRandom } from '@/domain/simulation/rng';
 
 export const STRATEGIES = ['inTurn', 'shortest', 'manual'] as const;
 export type Strategy = (typeof STRATEGIES)[number];
