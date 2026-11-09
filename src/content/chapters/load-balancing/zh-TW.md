@@ -6,7 +6,7 @@ summary: 如何把湧入的工作分給多個工作者，讓沒有人被壓垮�
 
 ## @situation
 
-超市有六條結帳隊伍。你排進最短的那一條，但前面的人推著滿滿一車商品，還在處理優惠券。隔壁比較長的隊伍反而走得更快。排隊的人數，並不等於排隊的工作量。
+超市有六條結帳隊伍。你排進最短的那一條，但前面的人推著滿滿一車商品，還在處理優惠券。排隊的人數，並不等於排隊的工作量。
 
 ## @terms
 
@@ -59,15 +59,15 @@ summary: 如何把湧入的工作分給多個工作者，讓沒有人被壓垮�
 可以試試看：
 
 - 先跑輪詢，再用同一份流量換成最少連線。哪一條隊伍長得比較慢？
-- 讓伺服器速度不同，比較輪詢和加權輪詢。
+- 讓伺服器速度不同，並把權重設成和速度相符，因為速度和權重是分開的設定。然後比較輪詢和加權輪詢。
 - 打開比較檢視，除了平均值，也看看最長等待時間。
 
 ## @practice
 
-- 輪詢不管每個請求的成本，也不管每台伺服器的速度，所以倒楣的那一台可能越落越後面。 [Google SRE book](https://sre.google/sre-book/load-balancing-datacenter/)
-- 請求數相同，不代表負載相同。Dropbox 讓後端自己回報負載，好讓負載平衡器使用。 [Dropbox Bandaid](https://dropbox.tech/infrastructure/enhancing-bandaid-load-balancing-at-dropbox-by-leveraging-real-time-backend-server-load-information)
+- 輪詢不管每個請求的成本，也不管每台伺服器的速度。 [Google SRE book](https://sre.google/sre-book/load-balancing-datacenter/)
+- 請求數相同，不代表負載相同。 [Dropbox Bandaid](https://dropbox.tech/infrastructure/enhancing-bandaid-load-balancing-at-dropbox-by-leveraging-real-time-backend-server-load-information)
 - Dropbox 的 Robinhood 會依每個節點實測的使用率調整權重，新節點的流量則是慢慢加上去。 [Dropbox Robinhood](https://dropbox.tech/infrastructure/robinhood-in-house-load-balancing-service)
-- 固定比例的流量在硬體混用時會出問題，因為舊機器分到的份額和新機器一樣。Cloudflare 的 Unimog 改成讓份額自動調整。 [Cloudflare Unimog](https://blog.cloudflare.com/unimog-cloudflares-edge-load-balancer/)
+- 固定比例的流量在硬體與請求成本混雜時會出問題。 [Cloudflare Unimog](https://blog.cloudflare.com/unimog-cloudflares-edge-load-balancer/)
 - AWS 的 Application Load Balancer 預設使用輪詢，也可以改成把每個請求交給未完成請求最少的目標。 [AWS ALB target groups](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html)
 - Envoy 的 least request 模式會隨機挑兩台主機，把請求交給比較不忙的那一台。 [Envoy load balancers](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
 
@@ -80,11 +80,11 @@ summary: 如何把湧入的工作分給多個工作者，讓沒有人被壓垮�
 - 請求成本不一：少數成本很高的請求會卡住一條隊伍。看看輪詢和最少連線怎麼分散它們。
 - 一台伺服器掛掉：它的請求會失敗，其餘伺服器必須扛起負載。看看失敗數，以及其他隊伍會怎麼變。
 
-真實系統也會碰到這些情況。伺服器掛掉時，它的負載會移到其他台，多出來的負載又可能把它們壓垮，[Google SRE book 談連鎖故障](https://sre.google/sre-book/addressing-cascading-failures/)時有說明。重試會讓情況更糟，因為每個失敗的請求都會變成更多工作，所以 [AWS 建議使用帶抖動的退避重試](https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter)。當通過健康檢查的伺服器太少時，有些負載平衡器會乾脆把流量送給全部的伺服器，[Envoy 的 panic threshold](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/panic_threshold) 就是這樣做。
+真實系統也會碰到這些情況。伺服器掛掉時，它的負載會移到其他台，多出來的負載又可能把它們壓垮，[Google SRE book 談連鎖故障](https://sre.google/sre-book/addressing-cascading-failures/)時有說明。重試會讓情況更糟，因為每個失敗的請求都會變成更多工作，所以重試與退避值得讀 AWS Builders' Library 的文章 [Timeouts, retries and backoff with jitter](https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter)。Envoy 在 [panic threshold](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/panic_threshold) 頁面說明了太多伺服器不健康時它怎麼做。
 
 ## @config
 
-這段 Nginx 設定對應模擬的預設值：權重為 4、2、1 的加權最少連線。這只是最精簡的範例，所有選項請看 [Nginx upstream 文件](https://nginx.org/en/docs/http/ngx_http_upstream_module.html)。
+這段 Nginx 設定對應模擬預設的伺服器，權重為 4、2、1，並使用加權最少連線選項。這只是最精簡的範例，所有選項請看 [Nginx upstream 文件](https://nginx.org/en/docs/http/ngx_http_upstream_module.html)。
 
 ```nginx
 upstream backend {

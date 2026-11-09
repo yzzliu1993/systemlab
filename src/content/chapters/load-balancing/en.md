@@ -6,7 +6,7 @@ summary: How to share incoming work between several workers so that no one is sw
 
 ## @situation
 
-A supermarket has six checkout lines. You join the shortest one, but the person in front of you has a full cart and a coupon problem. The longer line next door moves faster. Counting people in line does not tell you how much work is in line.
+A supermarket has six checkout lines. You join the shortest one, but the person in front of you has a full cart and a coupon problem. Counting people in line does not tell you how much work is in line.
 
 ## @terms
 
@@ -59,15 +59,15 @@ The stats show how many requests are finished, failed and still waiting, plus th
 Things to try:
 
 - Run Round Robin, then switch to Least Connections on the same traffic. Which queue grows less?
-- Give the servers different speeds. Compare Round Robin with Weighted Round Robin.
+- Give the servers different speeds. Set the weights to match the speeds, since speed and weight are separate settings. Then compare Round Robin with Weighted Round Robin.
 - Open the compare view and look at the maximum wait, not only the average.
 
 ## @practice
 
-- Round Robin ignores how costly each Request is and how fast each Server is, so one unlucky Server can fall behind. [Google SRE book](https://sre.google/sre-book/load-balancing-datacenter/)
-- Equal request counts are not equal load. Dropbox made its backends report their own load so that the balancer could use it. [Dropbox Bandaid](https://dropbox.tech/infrastructure/enhancing-bandaid-load-balancing-at-dropbox-by-leveraging-real-time-backend-server-load-information)
+- Round Robin ignores how costly each Request is and how fast each Server is. [Google SRE book](https://sre.google/sre-book/load-balancing-datacenter/)
+- Equal request counts are not equal load. [Dropbox Bandaid](https://dropbox.tech/infrastructure/enhancing-bandaid-load-balancing-at-dropbox-by-leveraging-real-time-backend-server-load-information)
 - Dropbox Robinhood adjusts weights from the measured utilization of each node, and it ramps up traffic to a new node slowly. [Dropbox Robinhood](https://dropbox.tech/infrastructure/robinhood-in-house-load-balancing-service)
-- Fixed shares of traffic fail when hardware is mixed, because an older machine gets the same share as a newer one. Cloudflare Unimog adapts the shares instead. [Cloudflare Unimog](https://blog.cloudflare.com/unimog-cloudflares-edge-load-balancer/)
+- Fixed shares of traffic fail when hardware and request costs are mixed. [Cloudflare Unimog](https://blog.cloudflare.com/unimog-cloudflares-edge-load-balancer/)
 - AWS Application Load Balancer uses Round Robin by default, and it can instead send each Request to the target with the fewest outstanding requests. [AWS ALB target groups](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html)
 - Envoy's least request mode picks two random hosts and sends the Request to the less busy one. [Envoy load balancers](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)
 
@@ -80,11 +80,11 @@ Use the presets in the simulation to push the system until it bends. Watch the w
 - Mixed request costs: a few very costly requests block a queue. Watch how Round Robin and Least Connections spread them.
 - One server goes down: its requests fail and the rest must take the load. Watch the failed count and what happens to the other queues.
 
-These cases happen in real systems too. When a Server dies, its load moves to the others, and that extra load can overload them in turn, as described in the [Google SRE book on cascading failures](https://sre.google/sre-book/addressing-cascading-failures/). Retries make it worse because every failed Request comes back as more work, which is why [AWS recommends backoff with jitter](https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter). When too few servers pass the Health check, some balancers send traffic to all of them anyway, as [Envoy does with its panic threshold](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/panic_threshold).
+These cases happen in real systems too. When a Server dies, its load moves to the others, and that extra load can overload them in turn, as described in the [Google SRE book on cascading failures](https://sre.google/sre-book/addressing-cascading-failures/). Retries make it worse because every failed Request comes back as more work, so retries and backoff are worth reading about in the AWS Builders' Library article [Timeouts, retries and backoff with jitter](https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter). Envoy documents what it does when too many servers are unhealthy, on its [panic threshold](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/panic_threshold) page.
 
 ## @config
 
-This Nginx block matches the simulation defaults: Weighted Least Connections with weights 4, 2 and 1. It is a minimal example; see the [Nginx upstream docs](https://nginx.org/en/docs/http/ngx_http_upstream_module.html) for every option.
+This Nginx block matches the default servers, with weights 4, 2 and 1, and uses the Weighted Least Connections option. It is a minimal example; see the [Nginx upstream docs](https://nginx.org/en/docs/http/ngx_http_upstream_module.html) for every option.
 
 ```nginx
 upstream backend {
