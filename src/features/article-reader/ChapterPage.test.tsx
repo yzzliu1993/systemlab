@@ -112,7 +112,7 @@ describe('ChapterPage', () => {
   });
 
   it('T9: the rendered chapter has no strategy or score controls', () => {
-    render(<ChapterPage chapter={load('en')} />);
+    render(<ChapterPage chapter={load('en')} simulations={{}} />);
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.queryByText(/score|timer|time left/i)).toBeNull();
   });
@@ -124,5 +124,59 @@ describe('ChapterPage', () => {
         .parentElement as HTMLElement,
     ).getAllByRole('link');
     for (const a of sources) expect(a).toHaveAttribute('rel', 'noopener');
+  });
+});
+
+describe('ChapterPage simulations', () => {
+  it('T1: load-balancing has the algorithm picker in how and presets in extreme', () => {
+    render(<ChapterPage chapter={load('en')} />);
+    expect(
+      within(screen.getByTestId('slot-how')).getByLabelText('Algorithm'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('slot-extreme')).getByRole('button', {
+        name: en['sim.preset.heavy'],
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('T2: a chapter with no simulation has empty slots and no error', () => {
+    render(<ChapterPage chapter={chapterOf(doc('x'))} />);
+    expect(screen.getByTestId('slot-how')).toBeEmptyDOMElement();
+    expect(screen.getByTestId('slot-extreme')).toBeEmptyDOMElement();
+  });
+
+  it.each(['en', 'zh-TW'] as const)(
+    'T3: all headings and sources show in %s',
+    (lang) => {
+      useLanguage.setState({ language: lang });
+      const chapter = load(lang);
+      const dict = lang === 'en' ? en : zh;
+      render(<ChapterPage chapter={chapter} />);
+      expect(headingNames()).toEqual(
+        [...chapter.sections.map((s) => s.name), 'sources'].map(
+          (n) => dict[`chapter.section.${n}` as keyof typeof dict],
+        ),
+      );
+      expect(chapter.sections).toHaveLength(6);
+      const sourcesSection = screen.getByRole('heading', {
+        name: dict['chapter.section.sources'],
+      }).parentElement as HTMLElement;
+      for (const source of chapter.sources) {
+        expect(
+          within(sourcesSection).getByRole('link', { name: source.title }),
+        ).toHaveAttribute('href', source.url);
+      }
+    },
+  );
+
+  it('T4: the config section is a code block labelled nginx', () => {
+    render(<ChapterPage chapter={load('en')} />);
+    const heading = screen.getByRole('heading', {
+      name: en['chapter.section.config'],
+    });
+    const section = heading.parentElement as HTMLElement;
+    expect(within(section).getByText('nginx')).toBeInTheDocument();
+    expect(section.querySelector('pre code')).not.toBeNull();
   });
 });
