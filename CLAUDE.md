@@ -2,7 +2,7 @@
 
 A React 19 + TypeScript + Vite single-page app. Claude Code drives development from Linear tickets (`/ticket`, `/next`, `/decompose`), and `/retro` turns problems from real runs into improvement tickets. See `specs/HARNESS_SPEC.md` for the spec.
 
-The product teaches system design to engineers with no background in it, through everyday experience and mini games. See [PRODUCT.md](PRODUCT.md) for the direction.
+The product teaches system design to engineers with no background in it, one chapter per topic, with terms, tools, browser simulations and real-world cases. See [PRODUCT.md](PRODUCT.md) for the direction.
 
 ## Commands
 
