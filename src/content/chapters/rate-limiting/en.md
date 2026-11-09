@@ -81,7 +81,7 @@ Things to try:
 
 - Stripe runs several kinds of limiters and also load shedders, and it advises that a limiter should fail open if the limiter itself breaks. See [Stripe on rate limiters](https://stripe.com/blog/rate-limiters).
 - Cloudflare estimates a sliding window from two counters instead of storing every request. See [Cloudflare on counting things](https://blog.cloudflare.com/counting-things-a-lot-of-different-things/).
-- Figma kept its counters in Redis and used a shadow ban against abusers. See [Figma on rate limiting](https://www.figma.com/blog/an-alternative-approach-to-rate-limiting).
+- Figma kept its rate limit counters in Redis. See [Figma on rate limiting](https://www.figma.com/blog/an-alternative-approach-to-rate-limiting).
 - Netflix argues for limiting concurrent requests instead of a fixed rate, and shares a library for it. See [Netflix concurrency-limits](https://github.com/Netflix/concurrency-limits).
 - GitHub sends rate limit headers and asks clients to honor retry-after and to back off. The status can be 403 or 429. See [GitHub REST API rate limits](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api).
 - Discord sends Retry-After when it answers 429. See [Discord rate limits](https://docs.discord.com/developers/topics/rate-limits).

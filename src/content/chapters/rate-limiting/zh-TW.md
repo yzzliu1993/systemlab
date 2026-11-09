@@ -81,7 +81,7 @@ HTTP 標頭，告訴用戶端要等多久才能再試。它定義在 [RFC 9110](
 
 - Stripe 使用好幾種限流器，也有降載機制，並建議限流器自己壞掉時要選擇放行（fail open）。見 [Stripe 談限流器](https://stripe.com/blog/rate-limiters)。
 - Cloudflare 用兩個計數器來估算滑動窗口，而不是把每個請求都存起來。見 [Cloudflare 談計數](https://blog.cloudflare.com/counting-things-a-lot-of-different-things/)。
-- Figma 把計數器放在 Redis，並對濫用者使用影子封鎖（shadow ban）。見 [Figma 談限流](https://www.figma.com/blog/an-alternative-approach-to-rate-limiting)。
+- Figma 把限流的計數器放在 Redis。見 [Figma 談限流](https://www.figma.com/blog/an-alternative-approach-to-rate-limiting)。
 - Netflix 主張限制同時進行的請求數，而不是固定速率，並提供了相關的函式庫。見 [Netflix concurrency-limits](https://github.com/Netflix/concurrency-limits)。
 - GitHub 會送出限流標頭，並要求用戶端遵守 retry-after 並做退避。狀態碼可能是 403 或 429。見 [GitHub REST API 限流](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)。
 - Discord 回應 429 時會附上 Retry-After。見 [Discord 限流](https://docs.discord.com/developers/topics/rate-limits)。
