@@ -73,6 +73,7 @@ export function parseInlines(text: string): Inline[] {
     if (ch === '[') {
       const m = /^\[([^\]]+)\]\(([^)\s]+)\)/.exec(text.slice(i));
       if (m) {
+        if (HTML_RE.test(m[1]!)) fail(`Raw HTML is not allowed: ${m[1]}`);
         flush();
         out.push({ type: 'link', text: m[1]!, url: m[2]! });
         i += m[0].length;
@@ -109,6 +110,7 @@ function parseBlocks(lines: string[]): Block[] {
     if (line.startsWith('### ')) {
       const name = line.slice(4).trim();
       if (!name) fail('Term heading has no name');
+      if (HTML_RE.test(name)) fail(`Raw HTML is not allowed: ${name}`);
       const body: string[] = [];
       i++;
       let inFence = false;

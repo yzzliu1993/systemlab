@@ -106,6 +106,11 @@ describe('parseChapter', () => {
     expect(err(build({ swap: true }))).toContain('out of order');
   });
 
+  it('T5: a duplicated section is an error', () => {
+    const raw = build().replace('## @how', '## @how\n\nx\n\n## @how');
+    expect(err(raw)).toContain('Duplicate');
+  });
+
   it('T6: a body link not in sources names the URL', () => {
     expect(err(build({ extra: '[x](https://nope.example/z)' }))).toContain(
       'https://nope.example/z',
@@ -120,6 +125,19 @@ describe('parseChapter', () => {
 
   it('T8: raw HTML in the body is rejected', () => {
     expect(err(build({ extra: '<div>hi</div>' }))).toContain('HTML');
+  });
+
+  it('T8: raw HTML in link text is rejected', () => {
+    expect(err(build({ extra: `[<b>x</b>](${U1})` }))).toContain('HTML');
+  });
+
+  it('T8: raw HTML in a term name is rejected', () => {
+    const raw = build().replace('### Load balancer', '### <div>');
+    expect(err(raw)).toContain('HTML');
+  });
+
+  it('T8: raw HTML in a list item is rejected', () => {
+    expect(err(build({ practice: `- <i>x</i> [A](${U1})` }))).toContain('HTML');
   });
 
   it('T10: front matter without title names the key', () => {
