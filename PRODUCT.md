@@ -1,10 +1,10 @@
 # Product direction
 
-Working site name: Shop Lab (may change).
+Working site name: System Design (may change).
 
 ## Product
 
-- Shop Lab teaches system design to engineers who have no background in it.
+- System Design teaches system design to engineers who have no background in it.
 - Each chapter covers one topic: what its terms mean, which tools exist for it, how it works, and what goes wrong in real systems.
 - The home page is a plain list of chapters.
 - The reader should leave able to explain each term in plain words and know which tools to look up.
