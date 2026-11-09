@@ -5,6 +5,8 @@ import ExtremeCasesPanel from '@/features/simulation/ExtremeCasesPanel';
 import LoadBalancerSimulation from '@/features/simulation/LoadBalancerSimulation';
 import MessageQueueSimulation from '@/features/simulation/MessageQueueSimulation';
 import QueueExtremePanel from '@/features/simulation/QueueExtremePanel';
+import RateLimitExtremePanel from '@/features/simulation/RateLimitExtremePanel';
+import RateLimitSimulation from '@/features/simulation/RateLimitSimulation';
 
 export type SlotName = 'how' | 'extreme';
 export type ChapterSimulations = Readonly<
@@ -24,5 +26,9 @@ export const simulations: ChapterSimulations = {
   caching: {
     how: CacheSimulation,
     extreme: CacheExtremePanel,
+  },
+  'rate-limiting': {
+    how: RateLimitSimulation,
+    extreme: RateLimitExtremePanel,
   },
 };

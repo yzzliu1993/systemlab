@@ -32,17 +32,19 @@ describe('App header site name', () => {
 });
 
 describe('App', () => {
-  it('T1: home lists the load-balancing, message queue and caching chapters as links', () => {
+  it('T1: home lists the load-balancing, message queue, caching and rate-limiting chapters as links', () => {
     render(<App />);
     const main = within(screen.getByRole('main'));
     const links = main.getAllByRole('link');
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(4);
     expect(links[0]).toHaveTextContent('Load balancing');
     expect(links[0]).toHaveAttribute('href', '#/chapter/load-balancing');
     expect(links[1]).toHaveTextContent('Message queue');
     expect(links[1]).toHaveAttribute('href', '#/chapter/message-queue');
     expect(links[2]).toHaveTextContent('Caching');
     expect(links[2]).toHaveAttribute('href', '#/chapter/caching');
+    expect(links[3]).toHaveTextContent('Rate limiting');
+    expect(links[3]).toHaveAttribute('href', '#/chapter/rate-limiting');
   });
 
   it('T2: following the chapter link shows the chapter page', async () => {
