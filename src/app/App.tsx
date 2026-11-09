@@ -1,8 +1,8 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import Header from '@/components/Header';
-import LessonPage from '@/features/article-reader/LessonPage';
-import RoadmapHome from '@/features/roadmap-view/RoadmapHome';
-import { openLessonIds } from '@/features/roadmap-view/shopRoadmap';
+import ChapterList from '@/features/article-reader/ChapterList';
+import ChapterPage from '@/features/article-reader/ChapterPage';
+import { chapters } from '@/features/article-reader/registry';
 import { parseHash } from '@/domain/navigation/route';
 import { useLanguage } from '@/stores/language';
 
@@ -15,9 +15,15 @@ function useHash(): string {
   return useSyncExternalStore(subscribe, () => window.location.hash);
 }
 
+const knownIds = chapters.map((entry) => entry.en.id);
+
 export default function App() {
   const language = useLanguage((state) => state.language);
-  const route = parseHash(useHash(), openLessonIds);
+  const route = parseHash(useHash(), knownIds);
+  const entry =
+    route.page === 'chapter'
+      ? chapters.find((c) => c.en.id === route.id)
+      : undefined;
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -27,7 +33,7 @@ export default function App() {
     <div className="min-h-svh bg-[#EAF3EF] text-[#1E2A2E]">
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-6">
-        {route.page === 'lesson' ? <LessonPage /> : <RoadmapHome />}
+        {entry ? <ChapterPage chapter={entry[language]} /> : <ChapterList />}
       </main>
     </div>
   );
