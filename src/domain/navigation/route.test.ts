@@ -1,16 +1,16 @@
-import { lessonHash, parseHash } from '@/domain/navigation/route';
+import { chapterHash, parseHash } from '@/domain/navigation/route';
 
 describe('parseHash', () => {
-  it('T1: an open lesson hash gives a lesson route', () => {
-    expect(parseHash(lessonHash('a'), ['a'])).toEqual({
-      page: 'lesson',
-      id: 'a',
-    });
+  it('T7: a known chapter hash gives the chapter route', () => {
+    expect(
+      parseHash(chapterHash('load-balancing'), ['load-balancing']),
+    ).toEqual({ page: 'chapter', id: 'load-balancing' });
   });
 
-  it('T8: an unknown or closed hash gives home', () => {
-    expect(parseHash('#/nope', ['a'])).toEqual({ page: 'home' });
-    expect(parseHash('', ['a'])).toEqual({ page: 'home' });
-    expect(parseHash(lessonHash('b'), ['a'])).toEqual({ page: 'home' });
+  it('T6: an unknown chapter, old lesson hash or empty hash gives home', () => {
+    const ids = ['load-balancing'];
+    expect(parseHash('#/chapter/nope', ids)).toEqual({ page: 'home' });
+    expect(parseHash('#/lesson/long-line', ids)).toEqual({ page: 'home' });
+    expect(parseHash('', ids)).toEqual({ page: 'home' });
   });
 });

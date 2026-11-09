@@ -32,27 +32,23 @@ describe('App header site name', () => {
 });
 
 describe('App', () => {
-  it('T1: home lists only the long line, as a link', () => {
+  it('T1: home lists the load-balancing chapter as a link', () => {
     render(<App />);
     const main = within(screen.getByRole('main'));
-    expect(main.getAllByRole('listitem')).toHaveLength(1);
     const links = main.getAllByRole('link');
     expect(links).toHaveLength(1);
-    expect(links[0]).toHaveTextContent(en['stage.long-line.title']);
+    expect(links[0]).toHaveTextContent('Load balancing');
+    expect(links[0]).toHaveAttribute('href', '#/chapter/load-balancing');
   });
 
-  it('T2: following the long line link shows the lesson', async () => {
+  it('T2: following the chapter link shows the chapter page', async () => {
     render(<App />);
-    await userEvent.click(
-      screen.getByRole('link', { name: en['stage.long-line.title'] }),
-    );
+    await userEvent.click(screen.getByRole('link', { name: 'Load balancing' }));
     expect(
-      await screen.findByRole('heading', { name: en['lesson.story.heading'] }),
+      await screen.findByRole('heading', {
+        name: en['chapter.section.situation'],
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('game-area')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('heading', { name: en['lesson.term.heading'] }),
-    ).toBeNull();
   });
 
   it('T3: switching to Chinese changes text and lang', async () => {
@@ -88,8 +84,8 @@ describe('App', () => {
     ).toBeInTheDocument();
   });
 
-  it('T8: an unknown hash shows the home page', () => {
-    window.location.hash = '#/somewhere/else';
+  it('T6: an unknown chapter or old lesson hash shows the home page', () => {
+    window.location.hash = '#/lesson/long-line';
     render(<App />);
     expect(
       screen.getByRole('heading', { name: en['home.title'] }),
