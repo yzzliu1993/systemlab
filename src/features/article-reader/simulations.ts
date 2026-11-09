@@ -1,6 +1,8 @@
 import type { ComponentType } from 'react';
 import ExtremeCasesPanel from '@/features/simulation/ExtremeCasesPanel';
 import LoadBalancerSimulation from '@/features/simulation/LoadBalancerSimulation';
+import MessageQueueSimulation from '@/features/simulation/MessageQueueSimulation';
+import QueueExtremePanel from '@/features/simulation/QueueExtremePanel';
 
 export type SlotName = 'how' | 'extreme';
 export type ChapterSimulations = Readonly<
@@ -12,5 +14,9 @@ export const simulations: ChapterSimulations = {
   'load-balancing': {
     how: LoadBalancerSimulation,
     extreme: ExtremeCasesPanel,
+  },
+  'message-queue': {
+    how: MessageQueueSimulation,
+    extreme: QueueExtremePanel,
   },
 };

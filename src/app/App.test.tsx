@@ -36,9 +36,11 @@ describe('App', () => {
     render(<App />);
     const main = within(screen.getByRole('main'));
     const links = main.getAllByRole('link');
-    expect(links).toHaveLength(1);
+    expect(links).toHaveLength(2);
     expect(links[0]).toHaveTextContent('Load balancing');
     expect(links[0]).toHaveAttribute('href', '#/chapter/load-balancing');
+    expect(links[1]).toHaveTextContent('Message queue');
+    expect(links[1]).toHaveAttribute('href', '#/chapter/message-queue');
   });
 
   it('T2: following the chapter link shows the chapter page', async () => {
