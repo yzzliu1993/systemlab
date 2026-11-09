@@ -1,10 +1,21 @@
 import type { Chapter } from '@/domain/chapter/schema';
 import { BlockView, InlineView } from '@/features/article-reader/ChapterBody';
+import type {
+  ChapterSimulations,
+  SlotName,
+} from '@/features/article-reader/simulations';
+import { simulations as defaultSimulations } from '@/features/article-reader/simulations';
 import { useT } from '@/stores/language';
 
-const SLOTS = new Set(['how', 'extreme']);
+const SLOTS = new Set<string>(['how', 'extreme']);
 
-export default function ChapterPage({ chapter }: { chapter: Chapter }) {
+export default function ChapterPage({
+  chapter,
+  simulations = defaultSimulations,
+}: {
+  chapter: Chapter;
+  simulations?: ChapterSimulations;
+}) {
   const t = useT();
   return (
     <article className="flex flex-col gap-8">
@@ -26,7 +37,9 @@ export default function ChapterPage({ chapter }: { chapter: Chapter }) {
             <BlockView key={i} block={block} />
           ))}
           {SLOTS.has(section.name) && (
-            <div data-testid={`slot-${section.name}`} />
+            <div data-testid={`slot-${section.name}`}>
+              {Slot(simulations, chapter.id, section.name as SlotName)}
+            </div>
           )}
         </section>
       ))}
@@ -44,4 +57,13 @@ export default function ChapterPage({ chapter }: { chapter: Chapter }) {
       </section>
     </article>
   );
+}
+
+function Slot(
+  simulations: ChapterSimulations,
+  chapterId: string,
+  slot: SlotName,
+) {
+  const Component = simulations[chapterId]?.[slot];
+  return Component ? <Component /> : null;
 }
