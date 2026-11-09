@@ -96,7 +96,7 @@
   "sim.mq.stats.summary": "Tick {tick}. Backlog {backlog}, processed {processed}, redeliveries {redeliveries}, duplicate side effects {duplicates}, dead-lettered {deadLettered}.",
   "sim.mq.preset.trafficBurst": "Traffic burst",
   "sim.mq.preset.slowConsumers": "Slow consumers",
-  "sim.mq.preset.timeoutShorterThanProcessing": "Visibility timeout shorter than processing",
+  "sim.mq.preset.timeoutShorterThanProcessing": "Timeout shorter than processing",
   "sim.mq.preset.poisonMessage": "Poison message",
   "sim.mq.settings.rate": "Messages per tick",
   "sim.mq.settings.burst": "Burst messages per tick (0 for none)",

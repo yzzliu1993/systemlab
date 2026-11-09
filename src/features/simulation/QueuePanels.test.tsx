@@ -31,7 +31,7 @@ describe('message queue panels', () => {
     render(<QueueExtremePanel />);
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Visibility timeout shorter than processing',
+        name: 'Timeout shorter than processing',
       }),
     );
     expect(screen.getByLabelText('Visibility timeout (ticks)')).toHaveValue(3);
@@ -44,7 +44,7 @@ describe('message queue panels', () => {
     render(<QueueExtremePanel />);
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Visibility timeout shorter than processing',
+        name: 'Timeout shorter than processing',
       }),
     );
     fireEvent.click(screen.getByLabelText('Idempotency on'));
@@ -70,6 +70,40 @@ describe('message queue panels', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Tick 3 of 300')).toBeInTheDocument();
+  });
+
+  it('T6: a cost typed back to the preset value is applied after another cost', () => {
+    const processedAfterPreset = () => {
+      const view = render(<QueueExtremePanel />);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Timeout shorter than processing',
+        }),
+      );
+      return view;
+    };
+    const setCost = (value: string) => {
+      fireEvent.change(
+        screen.getByRole('spinbutton', { name: 'Processing cost (ticks)' }),
+        { target: { value } },
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
+    };
+    const first = processedAfterPreset();
+    step(100);
+    const expected = stat('Processed');
+    first.unmount();
+
+    processedAfterPreset();
+    const original = (
+      screen.getByRole('spinbutton', {
+        name: 'Processing cost (ticks)',
+      }) as HTMLInputElement
+    ).value;
+    setCost('1');
+    setCost(original);
+    step(100);
+    expect(stat('Processed')).toBe(expected);
   });
 
   it('T7: zh-TW labels are used', () => {

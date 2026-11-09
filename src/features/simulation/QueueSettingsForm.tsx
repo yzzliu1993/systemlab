@@ -53,8 +53,7 @@ export default function QueueSettingsForm({
 }) {
   const t = useT();
   const uid = useId();
-  const [initial] = useState(() => toDraft(settings));
-  const [draft, setDraft] = useState(initial);
+  const [draft, setDraft] = useState(() => toDraft(settings));
   const [error, setError] = useState<string | null>(null);
 
   const apply = () => {
@@ -78,7 +77,7 @@ export default function QueueSettingsForm({
       consumers: parse(draft.consumers),
       // An untouched cost keeps the preset's own mix.
       processingMix:
-        draft.cost === initial.cost
+        draft.cost === String(meanCost(settings))
           ? settings.processingMix
           : [{ cost: parse(draft.cost), weight: 1 }],
       visibilityTimeout: parse(draft.timeout),
