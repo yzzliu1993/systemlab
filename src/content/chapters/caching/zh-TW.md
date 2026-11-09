@@ -8,7 +8,7 @@ summary: 把最常讀的資料放在手邊，並了解複本過期時要付出�
 
 你在一張桌子前工作。每天要用的東西放在走廊另一頭的儲藏室，每次都跑去拿很花時間。
 
-所以你把幾樣常用的放在桌上，大部分的查找一秒就完成。但桌子很小，放滿之後，就得把某樣東西送回儲藏室，才有空位。
+所以你把幾樣常用的放在桌上，大部分的查找都很快。但桌子很小，放滿之後，就得把某樣東西送回儲藏室，才有空位。
 
 還有第二個問題。別人可能改了儲藏室裡的原件，桌上的複本就舊了，而你不一定知道。電腦面對的是同一種取捨：近處有一個又快又小的地方，遠處有一個又慢又大的地方，而複本可能過期。
 
@@ -81,10 +81,10 @@ LRU 是 least recently used 的縮寫，是一種淘汰規則：快取滿了的�
 - Facebook 在 memcached 之上建了一個非常大的分散式快取來處理讀取：[Scaling Memcache at Facebook](https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala)。
 - Meta 的 mcrouter 在某台快取主機故障時，會把流量送到健康的主機，也能用一個已暖機的快取替空快取暖機：[Introducing mcrouter](https://engineering.fb.com/2014/09/15/web/introducing-mcrouter-a-memcached-protocol-router-for-scaling-memcached-deployments/)。
 - Meta 描述了一種競態：延遲的填入動作，會在較新的失效之後寫入舊值：[Cache made consistent](https://engineering.fb.com/2022/06/08/core-infra/cache-made-consistent/)。
-- Uber 在資料庫前面放了一層整合式快取，使用 TTL 與失效機制；失效失敗時，那一列資料會一直過期到 TTL 結束：[How Uber serves over 150 million reads](https://www.uber.com/en-AE/blog/how-uber-serves-over-150-million-reads)。
+- Uber 在資料庫前面放了一層整合式快取，使用 TTL 與失效機制；失效失敗時，那一列資料會一直是舊的，直到 TTL 結束：[How Uber serves over 150 million reads](https://www.uber.com/en-AE/blog/how-uber-serves-over-150-million-reads)。
 - Netflix 的 EVCache 把快取資料視為隨時可能消失：[Netflix EVCache](https://github.com/Netflix/EVCache)。
 - Discord 把相同的並行讀取合併，讓資料庫只被讀一次：[How Discord stores trillions of messages](https://discord.com/blog/how-discord-stores-trillions-of-messages)。
-- Cloudflare 把許多對同一個未快取檔案的請求合併成一次回源：[Cloudflare tiered cache](https://developers.cloudflare.com/cache/how-to/tiered-cache/)。
+- Cloudflare 把許多對同一個未快取檔案的請求合併成一次回源：[Cloudflare default cache behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)。
 
 ## @extreme
 
@@ -114,7 +114,6 @@ maxmemory-policy allkeys-lru
 - [Memcached documentation](https://docs.memcached.org/)
 - [Memorystore memory management best practices](https://docs.cloud.google.com/memorystore/docs/redis/memory-management-best-practices)
 - [Cloudflare default cache behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)
-- [Cloudflare tiered cache](https://developers.cloudflare.com/cache/how-to/tiered-cache/)
 - [Scaling Memcache at Facebook (NSDI 2013)](https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala)
 - [Introducing mcrouter](https://engineering.fb.com/2014/09/15/web/introducing-mcrouter-a-memcached-protocol-router-for-scaling-memcached-deployments/)
 - [Cache made consistent](https://engineering.fb.com/2022/06/08/core-infra/cache-made-consistent/)

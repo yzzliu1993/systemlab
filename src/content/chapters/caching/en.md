@@ -8,7 +8,7 @@ summary: Keep the data you read most close at hand, and learn what it costs when
 
 You work at a desk. The things you use every day are in a storeroom down the hall. Walking there each time is slow.
 
-So you keep a few of them on your desk. Now most lookups take a second. But your desk is small. When it is full, something has to go back to the storeroom to make room.
+So you keep a few of them on your desk. Now most lookups are quick. But your desk is small. When it is full, something has to go back to the storeroom to make room.
 
 There is a second problem. Someone may change the original in the storeroom. The copy on your desk is then old, and you may not know it. Computers face the same trade: a fast, small place close by, a slow, big place far away, and a copy that can go out of date.
 
@@ -84,7 +84,7 @@ Things to try:
 - Uber put an integrated cache in front of its database. It uses TTLs and invalidation, and when an invalidation fails, a row stays stale until the TTL ends: [How Uber serves over 150 million reads](https://www.uber.com/en-AE/blog/how-uber-serves-over-150-million-reads).
 - Netflix EVCache treats cached data as something that can disappear at any time: [Netflix EVCache](https://github.com/Netflix/EVCache).
 - Discord combines identical concurrent reads so the database is read only once: [How Discord stores trillions of messages](https://discord.com/blog/how-discord-stores-trillions-of-messages).
-- Cloudflare collapses many requests for the same uncached file into one trip to the origin: [Cloudflare tiered cache](https://developers.cloudflare.com/cache/how-to/tiered-cache/).
+- Cloudflare collapses many requests for the same uncached file into one trip to the origin: [Cloudflare default cache behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/).
 
 ## @extreme
 
@@ -114,7 +114,6 @@ To give one key a TTL of 60 seconds, run `EXPIRE session:42 60`. See the [Redis 
 - [Memcached documentation](https://docs.memcached.org/)
 - [Memorystore memory management best practices](https://docs.cloud.google.com/memorystore/docs/redis/memory-management-best-practices)
 - [Cloudflare default cache behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)
-- [Cloudflare tiered cache](https://developers.cloudflare.com/cache/how-to/tiered-cache/)
 - [Scaling Memcache at Facebook (NSDI 2013)](https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala)
 - [Introducing mcrouter](https://engineering.fb.com/2014/09/15/web/introducing-mcrouter-a-memcached-protocol-router-for-scaling-memcached-deployments/)
 - [Cache made consistent](https://engineering.fb.com/2022/06/08/core-infra/cache-made-consistent/)
