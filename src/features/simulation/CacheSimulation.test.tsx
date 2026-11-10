@@ -114,6 +114,20 @@ describe('cache labels', () => {
     expect(
       screen.getByLabelText(zh['sim.cache.settings.coalescing']),
     ).toBeInTheDocument();
+    for (const name of [
+      '快取太小',
+      '快取重啟',
+      '熱門 key 過期',
+      '寫入時不做失效',
+    ]) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
+    expect(zh['sim.cache.stats.dbReads']).toBe('資料庫讀取次數');
+    expect(zh['sim.cache.stats.staleReads']).toBe('讀到過期資料的次數');
+    expect(zh['sim.cache.queue.title']).toBe('資料庫的佇列');
+    expect(zh['sim.cache.stats.evictions']).toBe('淘汰次數');
+    expect(zh['sim.cache.eviction.lru']).toBe('最近最少使用（LRU）');
+    expect(zh['sim.cache.hot']).toBe('熱門 key');
     expect(zh['sim.cache.settings.ttl']).toContain('存活時間（TTL');
     expect(zh['sim.cache.stats.evictions']).toContain('淘汰');
     expect(zh['sim.cache.settings.invalidate']).toContain('失效');
