@@ -184,7 +184,7 @@ export function validateSettings(settings: Settings): void {
       down.server < 0 ||
       down.server >= settings.servers.length
     )
-      fail('the server that goes down does not exist');
+      fail(`the server that goes down (index ${down.server}) does not exist`);
     if (
       !Number.isInteger(down.atTick) ||
       down.atTick < 1 ||

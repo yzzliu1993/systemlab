@@ -228,3 +228,43 @@ describe('load balancing simulation', () => {
     );
   });
 });
+
+describe('YOU-97: load balancer edge cases', () => {
+  it('T1: requests that wait while every server is down are sent first when it returns', () => {
+    const settings: Settings = {
+      ...everyTick,
+      ticks: 30,
+      servers: [{ speed: 1, weight: 1 }],
+      serverDown: { server: 0, atTick: 10, backAtTick: 20 },
+    };
+    const atTick19 = stepN(createRun(settings), 19);
+    expect(atTick19.servers[0]!.up).toBe(false);
+    const waiting = atTick19.unrouted;
+    expect(waiting.length).toBeGreaterThan(0);
+    expect(atTick19.servers[0]!.received).toBe(
+      atTick19.arrivals - waiting.length,
+    );
+
+    const atTick20 = step(atTick19);
+    expect(atTick20.servers[0]!.up).toBe(true);
+    expect(atTick20.unrouted).toEqual([]);
+    const server = atTick20.servers[0]!;
+    const ids = [server.serving!.request.id, ...server.queue.map((r) => r.id)];
+    const waitingIds = waiting.map((r) => r.id);
+    const lastWaiting = waitingIds[waitingIds.length - 1]!;
+    // The waiting requests start first, oldest first, then newer ones.
+    expect(ids.slice(0, waitingIds.length)).toEqual(waitingIds);
+    expect(ids.slice(waitingIds.length).every((id) => id > lastWaiting)).toBe(
+      true,
+    );
+  });
+
+  it('T2: a down server index outside the server list is rejected, naming the index', () => {
+    const settings: Settings = {
+      ...DEFAULT_SETTINGS,
+      serverDown: { server: 5, atTick: 10 },
+    };
+    expect(settings.servers).toHaveLength(3);
+    expect(() => createRun(settings)).toThrow(/index 5/);
+  });
+});
