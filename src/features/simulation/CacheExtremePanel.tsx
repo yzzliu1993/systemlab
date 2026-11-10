@@ -60,7 +60,6 @@ export default function CacheExtremePanel() {
       </div>
       <div className="flex flex-wrap items-end gap-4">
         <AdvancedSeed
-          key={settings.seed}
           seed={settings.seed}
           onChange={(seed) => setSettings({ ...settings, seed })}
         />

@@ -79,7 +79,7 @@ export default function RateLimitSimulation() {
             ))}
           </select>
         </div>
-        <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
+        <AdvancedSeed seed={seed} onChange={setSeed} />
       </div>
       <Playback
         playHintKey="sim.rl.play.hint"
