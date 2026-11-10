@@ -6,7 +6,7 @@ summary: 如何決定哪台機器負責哪一份資料，讓機器增加或減�
 
 ## @situation
 
-健身房有四排置物櫃。你的櫃子由手機號碼最後一個數字除以四決定。後來健身房多加了第五排，規則改成除以五。幾乎每個人的櫃子都換了位置，大家都得搬東西。
+健身房有四排置物櫃。你的櫃子由手機號碼最後一個數字除以四的餘數決定。後來健身房多加了第五排，規則改成除以五的餘數。兩種規則只有在數字 0 到 3 時結果相同。10 個可能的數字中，其他 6 個都換到新櫃子，所以大部分的人都得搬東西。
 
 ## @terms
 
@@ -72,7 +72,7 @@ summary: 如何決定哪台機器負責哪一份資料，讓機器增加或減�
 - Redis Cluster 把鍵分到 16384 個雜湊槽，重新分片時就在節點之間搬動槽。[Redis Cluster 規格](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/)
 - Discord 透過在雜湊環上查找，把每個 guild 導到某個節點。[Discord Elixir](https://discord.com/blog/how-discord-scaled-elixir-to-5-000-000-concurrent-users)
 - GitHub 的負載平衡器使用會合雜湊，所以新增一台伺服器只會改變大約 N 分之一的對應。[GitHub GLB Director](https://github.blog/engineering/infrastructure/glb-director-open-source-load-balancer/)
-- Cloudflare 把 Workers 安排在環上，所以新增一台伺服器只會重新安排它的鄰居。[Cloudflare shard and conquer](https://blog.cloudflare.com/eliminating-cold-starts-2-shard-and-conquer/)
+- Cloudflare 把 Workers 安排在環上，所以新增一台伺服器搬動的 Workers，比單純的雜湊表少得多。[Cloudflare shard and conquer](https://blog.cloudflare.com/eliminating-cold-starts-2-shard-and-conquer/)
 - 在 Envoy 中，主機變動時 ring hash 大約影響 1/N 的請求。Maglev 建表比較快，但會搬動更多的鍵。[Envoy 負載平衡器](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)與 [Maglev 論文](https://research.google/pubs/maglev-a-fast-and-reliable-software-network-load-balancer/)
 
 ## @extreme
@@ -82,13 +82,13 @@ summary: 如何決定哪台機器負責哪一份資料，讓機器增加或減�
 - 新增節點：看有多少鍵搬動。依我們自己的計算，從 4 個節點增加到 5 個，取模雜湊大約會搬動 5 分之 4 的鍵。這是我們自己算的，不是來源提供的數字。再拿來和雜湊環比較。
 - 移除節點：看它的鍵去了哪裡。沒有虛擬節點時，順時鐘方向的下一個節點會接下全部的鍵，負載因此暴增。有許多虛擬節點，或使用會合雜湊時，這些鍵會分散到其他節點。
 - 沒有虛擬節點：每個節點在環上只有一個點。看鍵數變得不平均。負載不均正是 Dynamo 改用虛擬節點的原因之一，論文第 4.2 節有說明。
-- 熱點鍵：單一個鍵收到大部分請求。看一個節點扛下負載，不論用哪種規則。Discord 曾在熱鬧的頻道上遇到熱點分區，請見它的[儲存兆則訊息](https://discord.com/blog/how-discord-stores-trillions-of-messages)一文。
+- 熱點鍵：單一個鍵收到很大一部分的請求。看一個節點扛下負載，不論用哪種規則。Discord 曾在熱鬧的頻道上遇到熱點分區，請見它的[儲存兆則訊息](https://discord.com/blog/how-discord-stores-trillions-of-messages)一文。
 
 負載不均與資料搬動是兩個不同的問題。一致性雜湊幫忙減少資料搬動，虛擬節點幫忙處理負載不均，但兩者都解決不了熱點鍵。
 
 ## @config
 
-這個 Envoy 叢集使用 ring hash 策略。環大小的設定決定環上有多少個點，環越大越平均。這只是最小範例，所有選項請見 [Envoy 負載平衡器頁面](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)。
+這個 Envoy 叢集使用 ring hash 策略。環大小的設定決定環上有多少個點，環越大越平均。後端端點（`load_assignment`）與路由的 `hash_policy` 都省略了，所列的兩個環大小是 Envoy 的預設值。這只是最小範例，所有選項請見 [Envoy 負載平衡器頁面](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers)。
 
 ```yaml
 clusters:
