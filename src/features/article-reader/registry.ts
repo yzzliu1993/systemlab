@@ -11,6 +11,9 @@ import cachingZh from '@/content/chapters/caching/zh-TW.md?raw';
 import rateLimitingEn from '@/content/chapters/rate-limiting/en.md?raw';
 import rateLimitingZh from '@/content/chapters/rate-limiting/zh-TW.md?raw';
 
+import consistentHashingEn from '@/content/chapters/consistent-hashing/en.md?raw';
+import consistentHashingZh from '@/content/chapters/consistent-hashing/zh-TW.md?raw';
+
 export type ChapterEntry = Readonly<Record<Language, Chapter>>;
 export type RawChapters = Readonly<
   Record<string, Readonly<Record<Language, string>>>
@@ -49,4 +52,8 @@ export const chapters: readonly ChapterEntry[] = buildRegistry({
   'message-queue': { en: messageQueueEn, 'zh-TW': messageQueueZh },
   caching: { en: cachingEn, 'zh-TW': cachingZh },
   'rate-limiting': { en: rateLimitingEn, 'zh-TW': rateLimitingZh },
+  'consistent-hashing': {
+    en: consistentHashingEn,
+    'zh-TW': consistentHashingZh,
+  },
 });

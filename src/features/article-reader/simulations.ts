@@ -2,6 +2,8 @@ import type { ComponentType } from 'react';
 import CacheExtremePanel from '@/features/simulation/CacheExtremePanel';
 import CacheSimulation from '@/features/simulation/CacheSimulation';
 import ExtremeCasesPanel from '@/features/simulation/ExtremeCasesPanel';
+import HashingExtremePanel from '@/features/simulation/HashingExtremePanel';
+import HashingSimulation from '@/features/simulation/HashingSimulation';
 import LoadBalancerSimulation from '@/features/simulation/LoadBalancerSimulation';
 import MessageQueueSimulation from '@/features/simulation/MessageQueueSimulation';
 import QueueExtremePanel from '@/features/simulation/QueueExtremePanel';
@@ -30,5 +32,9 @@ export const simulations: ChapterSimulations = {
   'rate-limiting': {
     how: RateLimitSimulation,
     extreme: RateLimitExtremePanel,
+  },
+  'consistent-hashing': {
+    how: HashingSimulation,
+    extreme: HashingExtremePanel,
   },
 };
