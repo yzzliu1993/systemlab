@@ -2,7 +2,11 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { DEFAULT_SETTINGS } from '@/domain/simulation/rateLimit';
 import type { Settings } from '@/domain/simulation/rateLimit';
-import { Playback, SeedField, buttonClass } from '@/features/simulation/parts';
+import {
+  Playback,
+  AdvancedSeed,
+  buttonClass,
+} from '@/features/simulation/parts';
 import RateLimitSettingsForm from '@/features/simulation/RateLimitSettingsForm';
 import RateLimitView from '@/features/simulation/RateLimitView';
 import {
@@ -51,7 +55,7 @@ export default function RateLimitExtremePanel() {
           </button>
         ))}
       </div>
-      <SeedField
+      <AdvancedSeed
         key={settings.seed}
         seed={settings.seed}
         onChange={(seed) => setSettings({ ...settings, seed })}
@@ -62,6 +66,7 @@ export default function RateLimitExtremePanel() {
         onApply={setSettings}
       />
       <Playback
+        playHintKey="sim.rl.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

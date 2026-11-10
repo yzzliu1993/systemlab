@@ -30,6 +30,7 @@ export default function CompareView({ settings }: { settings: Settings }) {
     >
       <h4 className="font-semibold">{t('sim.compare.title')}</h4>
       <Playback
+        playHintKey="sim.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

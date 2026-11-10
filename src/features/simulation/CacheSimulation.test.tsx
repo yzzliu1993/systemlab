@@ -11,7 +11,7 @@ beforeEach(() => {
 
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
-    fireEvent.click(screen.getByRole('button', { name: 'Step' }));
+    fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
 };
 const stat = (label: string) =>
   within(screen.getByLabelText('Stats')).getByText(label).nextElementSibling!
@@ -21,9 +21,9 @@ const percent = (label: string) => parseFloat(stat(label));
 describe('CacheSimulation', () => {
   it('T2: starts at tick 0 and Step moves to tick 1', () => {
     render(<CacheSimulation />);
-    expect(screen.getByText('Tick 0 of 400')).toBeInTheDocument();
+    expect(screen.getByText('Time: 0 / 400')).toBeInTheDocument();
     step();
-    expect(screen.getByText('Tick 1 of 400')).toBeInTheDocument();
+    expect(screen.getByText('Time: 1 / 400')).toBeInTheDocument();
     expect(stat('Cache hit rate')).toMatch(/%$/);
     expect(screen.getByText(/Tick 1\. Cache hit rate/)).toBeInTheDocument();
   });
@@ -31,10 +31,10 @@ describe('CacheSimulation', () => {
   it('Reset starts the run again from tick 0', () => {
     render(<CacheSimulation />);
     step(3);
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
-    expect(screen.getByText('Tick 0 of 400')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
+    expect(screen.getByText('Time: 0 / 400')).toBeInTheDocument();
     step();
-    expect(screen.getByText('Tick 1 of 400')).toBeInTheDocument();
+    expect(screen.getByText('Time: 1 / 400')).toBeInTheDocument();
   });
 });
 
@@ -83,7 +83,7 @@ describe('CacheExtremePanel', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'The database capacity must be a whole number, 1 or more.',
     );
-    expect(screen.getByText('Tick 5 of 400')).toBeInTheDocument();
+    expect(screen.getByText('Time: 5 / 400')).toBeInTheDocument();
   });
 
   it('presets set their values and stay editable', () => {

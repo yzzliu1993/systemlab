@@ -1,7 +1,11 @@
 import { useId, useMemo, useState } from 'react';
 import { DEFAULT_SETTINGS } from '@/domain/simulation/rateLimit';
 import type { Settings } from '@/domain/simulation/rateLimit';
-import { Playback, SeedField, fieldClass } from '@/features/simulation/parts';
+import {
+  Playback,
+  AdvancedSeed,
+  fieldClass,
+} from '@/features/simulation/parts';
 import RateLimitView from '@/features/simulation/RateLimitView';
 import {
   LIMITER_ALGORITHMS,
@@ -75,9 +79,10 @@ export default function RateLimitSimulation() {
             ))}
           </select>
         </div>
-        <SeedField key={seed} seed={seed} onChange={setSeed} />
+        <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
       </div>
       <Playback
+        playHintKey="sim.rl.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import { ALGORITHMS, getStats } from '@/domain/simulation/loadBalancer';
 import type { Algorithm, RunState } from '@/domain/simulation/loadBalancer';
@@ -13,6 +14,7 @@ export function fill(text: string, values: Record<string, string | number>) {
 
 const buttonClass =
   'rounded border border-slate-400 bg-white px-3 py-1 text-sm hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700 disabled:opacity-50';
+const hintClass = 'text-xs text-slate-600';
 const fieldClass = 'rounded border border-slate-400 bg-white px-2 py-1 text-sm';
 
 export function AlgorithmPicker({
@@ -47,7 +49,7 @@ export function AlgorithmPicker({
   );
 }
 
-export function SeedField({
+function SeedField({
   seed,
   onChange,
 }: {
@@ -56,6 +58,7 @@ export function SeedField({
 }) {
   const t = useT();
   const id = useId();
+  const hintId = useId();
   const [draft, setDraft] = useState(String(seed));
   const [invalid, setInvalid] = useState(false);
   const apply = () => {
@@ -77,6 +80,7 @@ export function SeedField({
           id={id}
           type="number"
           step="any"
+          aria-describedby={hintId}
           className={clsx(fieldClass, 'w-28')}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -85,7 +89,49 @@ export function SeedField({
           {t('sim.seed.set')}
         </button>
       </div>
+      <p id={hintId} className={hintClass}>
+        {t('sim.seed.hint')}
+      </p>
       {invalid && <p role="alert">{t('sim.seed.invalid')}</p>}
+    </div>
+  );
+}
+
+/** The seed control, tucked into a collapsed Advanced area. */
+export function AdvancedSeed({
+  seed,
+  onChange,
+}: {
+  seed: number;
+  onChange: (seed: number) => void;
+}) {
+  const t = useT();
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer font-medium">
+        {fill(t('sim.advanced.summary'), { seed })}
+      </summary>
+      <div className="pt-2">
+        <SeedField key={seed} seed={seed} onChange={onChange} />
+      </div>
+    </details>
+  );
+}
+
+function Hinted({
+  hint,
+  children,
+}: {
+  hint: string;
+  children: (hintId: string) => ReactNode;
+}) {
+  const hintId = useId();
+  return (
+    <div className="flex max-w-56 flex-col items-start gap-1">
+      {children(hintId)}
+      <p id={hintId} className={hintClass}>
+        {hint}
+      </p>
     </div>
   );
 }
@@ -94,6 +140,7 @@ export function Playback({
   running,
   complete,
   speed,
+  playHintKey,
   onSpeed,
   onPlay,
   onPause,
@@ -103,6 +150,8 @@ export function Playback({
   running: boolean;
   complete: boolean;
   speed: number;
+  /** Locale key of the chapter-specific hint under the Start button. */
+  playHintKey: string;
   onSpeed: (speed: number) => void;
   onPlay: () => void;
   onPause: () => void;
@@ -112,32 +161,60 @@ export function Playback({
   const t = useT();
   const id = useId();
   return (
-    <div className="flex flex-wrap items-end gap-2">
+    <div className="flex flex-wrap items-start gap-4">
       {running ? (
-        <button type="button" className={buttonClass} onClick={onPause}>
-          {t('sim.pause')}
-        </button>
+        <Hinted hint={t('sim.pause.hint')}>
+          {(hintId) => (
+            <button
+              type="button"
+              className={buttonClass}
+              aria-describedby={hintId}
+              onClick={onPause}
+            >
+              {t('sim.pause')}
+            </button>
+          )}
+        </Hinted>
       ) : (
-        <button
-          type="button"
-          className={buttonClass}
-          onClick={onPlay}
-          disabled={complete}
-        >
-          {t('sim.play')}
-        </button>
+        <Hinted hint={t(playHintKey)}>
+          {(hintId) => (
+            <button
+              type="button"
+              className={buttonClass}
+              aria-describedby={hintId}
+              onClick={onPlay}
+              disabled={complete}
+            >
+              {t('sim.play')}
+            </button>
+          )}
+        </Hinted>
       )}
-      <button
-        type="button"
-        className={buttonClass}
-        onClick={onStep}
-        disabled={complete}
-      >
-        {t('sim.step')}
-      </button>
-      <button type="button" className={buttonClass} onClick={onReset}>
-        {t('sim.reset')}
-      </button>
+      <Hinted hint={t('sim.step.hint')}>
+        {(hintId) => (
+          <button
+            type="button"
+            className={buttonClass}
+            aria-describedby={hintId}
+            onClick={onStep}
+            disabled={complete}
+          >
+            {t('sim.step')}
+          </button>
+        )}
+      </Hinted>
+      <Hinted hint={t('sim.reset.hint')}>
+        {(hintId) => (
+          <button
+            type="button"
+            className={buttonClass}
+            aria-describedby={hintId}
+            onClick={onReset}
+          >
+            {t('sim.reset')}
+          </button>
+        )}
+      </Hinted>
       <div className="flex flex-col gap-1">
         <label htmlFor={id} className="text-sm font-medium">
           {t('sim.speed.label')}

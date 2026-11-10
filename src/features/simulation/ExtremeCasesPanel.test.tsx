@@ -9,7 +9,7 @@ beforeEach(() => {
 
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
-    fireEvent.click(screen.getByRole('button', { name: 'Step' }));
+    fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
 };
 const preset = (name: string | RegExp) =>
   fireEvent.click(screen.getByRole('button', { name }));
@@ -84,7 +84,7 @@ describe('ExtremeCasesPanel', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Use a whole number of servers from 1 to 10.',
     );
-    expect(screen.getByText(/Tick 5 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 5 \//)).toBeInTheDocument();
     expect(screen.getAllByRole('region', { name: /^Server \d$/ })).toHaveLength(
       3,
     );
@@ -92,7 +92,7 @@ describe('ExtremeCasesPanel', () => {
     type('Arrival multiplier', '-1');
     fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
     expect(screen.getByRole('alert')).toHaveTextContent(/multiplier/);
-    expect(screen.getByText(/Tick 5 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 5 \//)).toBeInTheDocument();
   });
 
   it('T8: compare view with the mixed costs preset shows two panels with the same arrivals', () => {
@@ -106,9 +106,13 @@ describe('ExtremeCasesPanel', () => {
     const compare = screen.getByRole('region', {
       name: 'Same arrivals, two algorithms',
     });
-    fireEvent.click(within(compare).getByRole('button', { name: 'Step' }));
+    fireEvent.click(
+      within(compare).getByRole('button', { name: 'One step forward' }),
+    );
     for (let i = 0; i < 80; i += 1)
-      fireEvent.click(within(compare).getByRole('button', { name: 'Step' }));
+      fireEvent.click(
+        within(compare).getByRole('button', { name: 'One step forward' }),
+      );
     const [a, b] = panels.map((p) => statIn(p, 'Arrived'));
     expect(a).toBeGreaterThan(0);
     expect(a).toBe(b);

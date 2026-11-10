@@ -7,7 +7,11 @@ import {
 import type { CacheSettings } from '@/domain/simulation/cache';
 import CacheRunView from '@/features/simulation/CacheRunView';
 import CacheSettingsForm from '@/features/simulation/CacheSettingsForm';
-import { Playback, SeedField, buttonClass } from '@/features/simulation/parts';
+import {
+  Playback,
+  AdvancedSeed,
+  buttonClass,
+} from '@/features/simulation/parts';
 import { useCacheRun } from '@/features/simulation/useCacheRun';
 import { useT } from '@/stores/language';
 
@@ -55,7 +59,7 @@ export default function CacheExtremePanel() {
         ))}
       </div>
       <div className="flex flex-wrap items-end gap-4">
-        <SeedField
+        <AdvancedSeed
           key={settings.seed}
           seed={settings.seed}
           onChange={(seed) => setSettings({ ...settings, seed })}
@@ -67,6 +71,7 @@ export default function CacheExtremePanel() {
         onApply={setSettings}
       />
       <Playback
+        playHintKey="sim.cache.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

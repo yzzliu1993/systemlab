@@ -10,7 +10,7 @@ beforeEach(() => {
 
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
-    fireEvent.click(screen.getByRole('button', { name: 'Step' }));
+    fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
 };
 const stat = (label: string) =>
   Number(
@@ -21,9 +21,9 @@ const stat = (label: string) =>
 describe('message queue panels', () => {
   it('T2: section 3 starts at tick 0 and Step moves to tick 1', () => {
     render(<MessageQueueSimulation />);
-    expect(screen.getByText('Tick 0 of 300')).toBeInTheDocument();
+    expect(screen.getByText('Time: 0 / 300')).toBeInTheDocument();
     step();
-    expect(screen.getByText('Tick 1 of 300')).toBeInTheDocument();
+    expect(screen.getByText('Time: 1 / 300')).toBeInTheDocument();
     expect(screen.getByText('Backlog')).toBeInTheDocument();
   });
 
@@ -69,7 +69,7 @@ describe('message queue panels', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
     expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('Tick 3 of 300')).toBeInTheDocument();
+    expect(screen.getByText('Time: 3 / 300')).toBeInTheDocument();
   });
 
   it('T6: a cost typed back to the preset value is applied after another cost', () => {

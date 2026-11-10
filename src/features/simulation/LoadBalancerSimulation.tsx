@@ -5,7 +5,7 @@ import {
   AlgorithmPicker,
   Playback,
   RunView,
-  SeedField,
+  AdvancedSeed,
 } from '@/features/simulation/parts';
 import { useRuns } from '@/features/simulation/useRuns';
 import { useT } from '@/stores/language';
@@ -28,9 +28,10 @@ export default function LoadBalancerSimulation() {
       <h3 className="text-lg font-semibold">{t('sim.how.title')}</h3>
       <div className="flex flex-wrap items-end gap-4">
         <AlgorithmPicker value={algorithm} onChange={setAlgorithm} />
-        <SeedField key={seed} seed={seed} onChange={setSeed} />
+        <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
       </div>
       <Playback
+        playHintKey="sim.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}
