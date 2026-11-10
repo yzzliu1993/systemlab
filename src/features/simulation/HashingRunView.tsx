@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { ringPositions } from '@/domain/simulation/consistentHashing';
 import type {
   ChangeReport,
@@ -88,7 +89,7 @@ function Mark({
   }
 }
 
-function Ring({
+const Ring = memo(function Ring({
   nodeIds,
   virtualNodes,
 }: {
@@ -96,7 +97,10 @@ function Ring({
   virtualNodes: number;
 }) {
   const t = useT();
-  const points = ringPositions({ nodeIds, virtualNodes });
+  const points = useMemo(
+    () => ringPositions({ nodeIds, virtualNodes }),
+    [nodeIds, virtualNodes],
+  );
   const allMarks = virtualNodes <= MARKS_UP_TO;
   return (
     <svg
@@ -163,7 +167,7 @@ function Ring({
       })}
     </svg>
   );
-}
+});
 
 function Bar({ value, max }: { value: number; max: number }) {
   const width = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -211,7 +215,7 @@ export default function HashingRunView({
   report?: ChangeReport;
 }) {
   const t = useT();
-  const nodeIds = stats.nodes.map((n) => n.nodeId);
+  const nodeIds = useMemo(() => stats.nodes.map((n) => n.nodeId), [stats]);
   const maxKeys = Math.max(...stats.nodes.map((n) => n.keys));
   const maxRequests = Math.max(...stats.nodes.map((n) => n.requestsPerTick));
   const totalKeys = stats.owners.length;
