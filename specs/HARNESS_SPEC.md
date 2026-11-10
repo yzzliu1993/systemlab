@@ -2,7 +2,7 @@
 
 > v4 splits the work into **independent agents that claim their own work from Linear**. Any number of Claude Code sessions can run at once. A session dispatches agents, and each agent claims one ticket or PR, works in its own git worktree, and updates Linear itself. The agent definitions live in `.claude/agents/` and the session commands in `.claude/skills/`.
 >
-> Transition: this spec is the target. Until the agent definitions (YOU-111, YOU-112) and the session commands (YOU-113) are merged, `.claude/agents/` and `.claude/skills/` still follow v3, and `/ticket`, `/next` and `/decompose` keep working as before.
+> **Transition**: this spec is the target. Until the agent definitions (YOU-111, YOU-112) and the session commands (YOU-113) are merged, `.claude/agents/` and `.claude/skills/` still follow v3, and the v3 flow stays valid exactly as those files define it: `/ticket`, `/next` and `/decompose` keep working; the main session running them owns Linear, pushes and opens PRs; the implementer and reviewer subagents do not change Linear, push or merge; and `/ticket` step 8 may auto-merge as `.claude/skills/ticket/merge.md` describes. Where a v3 skill cites a section of this spec by its old number, read §4.1 (decomposition) as §3 and §3.6 (friction and `/retro`) as §3.8. The v4 rules below take over for each part as its ticket lands.
 
 ---
 
@@ -111,14 +111,15 @@ A session reports each agent's result when it ends: the ticket, the PR, the outc
 ### 3.2 Claim protocol
 A claim tells every other agent and you that a ticket (or its PR) is taken.
 
-1. **Check**: read the ticket's comments. If it has a live claim for the same role by another agent, pick something else.
-2. **Claim**: set the state (implementer: In Progress) and assign the ticket to `me`, then write one comment:
+1. **Check**: read the ticket's comments. If it has a live claim (below) for the same role by another agent, pick something else.
+2. **Claim**: write one comment, and change nothing else yet:
    `<!-- harness:claim role=<implementer|reviewer> by=<agent id> at=<ISO time> -->` followed by a one-line human note. `<agent id>` is the session name plus a short random suffix, so two agents never share it.
-3. **Confirm**: read the comments again. Among live claims for the same role, the one Linear created first (comment `createdAt`) wins. If that is not this agent's, it marks its own claim released and picks something else.
-4. **Release**: when it finishes, hands off or stops on purpose, the agent edits its claim comment to add `released=<ISO time> outcome=<pr-opened|merged|awaiting-merge|needs-rework|needs-human|withdrawn>`.
-5. **Stale**: a claim with no `released` and no update to the ticket's `<!-- harness:progress -->` comment for **2 hours** is stale. Another agent may take over: it releases the stale claim with `outcome=stale-takeover by=<new agent id>` and claims it as above, then resumes from the actual state (§6).
+3. **Confirm**: read the comments again. Among live claims for the same role, the one Linear created first (comment `createdAt`) wins; if two have the same `createdAt`, the smaller `<agent id>` in string order wins. If the winner is not this agent, it releases its own claim with `outcome=withdrawn` and picks something else, without touching the state or the assignee.
+4. **Take the ticket**: only the winner then sets the state (implementer: In Progress) and assigns the ticket to `me`, so Linear always shows the agent that actually holds it.
+5. **Release**: when it finishes, hands off or stops on purpose, the agent edits its claim comment to add `released=<ISO time> outcome=<pr-opened|merged|awaiting-merge|needs-rework|needs-human|withdrawn>`.
+6. **Stale**: a live claim is stale when **2 hours** have passed since the later of its own `at` and the last update to the ticket's `<!-- harness:progress -->` comment. Another agent of the same role may take over: it edits the stale claim to add `released=<ISO time> outcome=stale-takeover by=<new agent id>`, claims as above, and resumes from the actual state (§6).
 
-A live claim is one with no `released`. Agents never delete comments.
+A live claim is one with no `released`. Agents never delete comments. An agent that is still working updates the progress comment at least every 2 hours so its claim does not go stale.
 
 ### 3.3 What an implementer picks
 If the session names a ticket, the implementer takes that one (still claiming it). Otherwise, in this order:
@@ -130,7 +131,12 @@ If the session names a ticket, the implementer takes that one (still claiming it
 Always skip `needs-human`, `spec-needed`, `agent-proposed`, `draft` and `harness`. Skip everything while `.harness/PAUSE` exists.
 
 ### 3.4 What a reviewer picks
-If the session names a PR, the reviewer takes that one. Otherwise: tickets In Review with an open PR whose latest harness review (§6) is not for the current head commit, with no live reviewer claim, oldest first. A reviewer never takes a PR whose implementer claim carries its own agent id. `awaiting-merge` PRs are skipped (they wait for you).
+If the session names a PR, the reviewer takes that one. Otherwise, in this order:
+
+1. Tickets In Review with an open PR and a stale reviewer claim (§3.2 step 6).
+2. Tickets In Review with an open PR whose latest harness review (§6) is not for the current head commit, with no live reviewer claim, oldest first.
+
+A reviewer never takes a PR on a ticket where any implementer claim carries its own agent id, so the reviewer and the implementer are always different agents. `awaiting-merge` PRs are skipped (they wait for you).
 
 ### 3.5 State changes
 | From | To | Who | When |
@@ -141,7 +147,9 @@ If the session names a PR, the reviewer takes that one. Otherwise: tickets In Re
 | In Review | In Progress + `needs-rework` | reviewer | Changes requested, or the rebase changed the patch |
 | In Progress + `needs-rework` | In Review | implementer | After pushing the fix; it removes `needs-rework` |
 | In Review | Done | reviewer | After merging (Linear's PR automation also does this); it removes `awaiting-merge` if present |
+| In Review | In Progress + `needs-rework` | reviewer | CI on the PR head is red for a reason other than runner or network flakiness (a flaky run is rerun once with `gh run rerun`); the failure log goes into the progress comment |
 | In Review | In Review + `awaiting-merge` | reviewer | Approved, but a protected path changed or `gh pr merge` failed |
+| In Review + `awaiting-merge` | Done | Human merges; then any session's `/status` or the next reviewer close-out removes `awaiting-merge` | The PR is merged |
 | any | + `needs-human` | Any agent | §7 circuit breaker, or anything the agent definition says to stop on |
 
 Every agent keeps one `<!-- harness:progress -->` comment on the ticket up to date and adds friction rows (§3.8). The formats stay as in v3.
@@ -184,7 +192,7 @@ Guardrails:
 - A session dispatches implementers and reviewers with worktree isolation, so each works in its own worktree. The main checkout is left to you. A worktree is removed when its agent ends.
 - Each agent ends with a json block (format in its definition file) that the session reads to report the result. `researcher` ends with markdown sections instead.
 - The reviewer decides its verdict and writes it in the harness review header itself; a review with no verdict is not posted. A session never infers a verdict.
-- Forbidden for every agent and session (also in `CLAUDE.md`; enforced by `permissions.deny` in `.claude/settings.json`): `gh pr merge --admin`, `git push --force` (any form), pushing to `main`, `git reset --hard`, deleting Linear comments, editing `.claude/settings.json` or `.claude/settings.local.json`.
+- Forbidden for every agent and session (also in `CLAUDE.md`): `gh pr merge --admin`, `git push --force` (any form), pushing to `main`, `git reset --hard`, deleting Linear comments, editing `.claude/settings.json` or `.claude/settings.local.json`. `permissions.deny` in `.claude/settings.json` enforces the git, `gh` and Linear-delete rules; editing the permission files is forbidden by this rule, and a human may add a deny rule for it.
 - Implementers and the ticket-writer never merge. A reviewer merges only under §5.1. `.claude/settings.json` allows only the `--squash` form.
 - Implementers never edit protected paths (§5.1). When the ticket needs one, the implementer stops with `needs-human` and explains why.
 
@@ -203,7 +211,7 @@ Guardrails:
 A reviewer runs `gh pr merge <n> --subject "<type>(<ID>): <description> (#<n>)" --match-head-commit <sha> --squash` only when all of these hold, using fresh values from GitHub:
 
 - CI is green on the PR head commit `<sha>`.
-- Its own harness review for `<sha>` (§6) has `verdict=approve`, and it is the latest harness review on the PR.
+- Its own harness review for `<sha>` (§6, matching `by=<its agent id>`) has `verdict=approve`, and it is the latest harness review on the PR.
 - `mergeStateStatus` is `CLEAN`.
 - The PR is not a draft. A draft can report `CLEAN`, so `isDraft` is checked separately.
 - No changed file is a protected path, including the old path of a renamed file.
@@ -211,7 +219,7 @@ A reviewer runs `gh pr merge <n> --subject "<type>(<ID>): <description> (#<n>)" 
 
 Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`. These decide how the harness and its checks behave, so no agent merges a change to them.
 
-- **`BEHIND`**: the reviewer runs `gh pr update-branch <n> --rebase`, waits for CI on the new head, and compares the patch with `git range-diff`. If the patch is unchanged, it reviews the new head (a new harness review for the new `sha`) and merges if §5.1 holds. If the patch changed or there are conflicts, it returns the ticket with `needs-rework`.
+- **`BEHIND`**: the reviewer records the current head sha, runs `gh pr update-branch <n> --rebase`, waits for CI on the new head, and compares the old and new patch with `git range-diff`. If the patch is unchanged, it reviews the new head (a new harness review for the new `sha`) and merges if §5.1 holds. The patch check cannot catch a semantic clash with new code on `main`; green CI on the new head covers that. If the patch changed or there are conflicts, it returns the ticket with `needs-rework`.
 - **`DIRTY`** (conflicts): `needs-rework`; the implementer resolves with `git merge origin/main`.
 - If a condition fails for a protected path, or `gh pr merge` returns an error, the ticket gets `awaiting-merge` and a comment with the reason.
 - After a merge, the reviewer checks CI on `main` for the merge commit. A failure opens or updates a `main-ci-failure` ticket per §8.
@@ -228,7 +236,7 @@ There is no separate state file. A resuming agent decides from the actual state:
 | `<!-- harness:claim … -->` comments on Linear | Who holds the ticket, whether the claim is released or stale (§3.2) |
 | Remote branch / PR | Whether the code and PR exist (PRs are found by the `[YOU-n]` title prefix, because the remote branch is deleted after merge) |
 | `gh run` | CI result of the PR head commit |
-| `<!-- harness:review round=N sha=… verdict=… -->` comments by `yzzliu1993` on the PR | Review round count, whether the head was reviewed, the verdict |
+| `<!-- harness:review round=N sha=… verdict=… by=<agent id> -->` comments by `yzzliu1993` on the PR | Review round count, whether the head was reviewed, the verdict, and which reviewer wrote it (every comment is posted by the same GitHub account, so `by` is how "its own review" in §5.1 is checked) |
 | Linear labels | `needs-rework`, `awaiting-merge`, `needs-human` |
 | `<!-- harness:progress -->` comment on Linear | Human-readable progress and failure history (the basis for the circuit breaker count) |
 
