@@ -52,7 +52,7 @@ A regular test that asks each Server whether it can still serve. A Server that f
 
 ## @how
 
-The simulation below shows several servers, each with a queue. Requests arrive over time and the Load Balancer sends each one to a Server using the algorithm you pick. Press play and watch the queues.
+The simulation below shows several servers, each with a queue. Requests arrive over time and the Load Balancer sends each one to a Server using the algorithm you pick. Press "▶ Start" and watch the queues.
 
 The stats show how many requests are finished, failed and still waiting, plus the average and the maximum wait. The compare view runs two algorithms on the same traffic so you can see the difference.
 
