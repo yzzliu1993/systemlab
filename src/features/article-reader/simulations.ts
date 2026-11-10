@@ -1,4 +1,6 @@
 import type { ComponentType } from 'react';
+import CacheExtremePanel from '@/features/simulation/CacheExtremePanel';
+import CacheSimulation from '@/features/simulation/CacheSimulation';
 import ExtremeCasesPanel from '@/features/simulation/ExtremeCasesPanel';
 import LoadBalancerSimulation from '@/features/simulation/LoadBalancerSimulation';
 import MessageQueueSimulation from '@/features/simulation/MessageQueueSimulation';
@@ -18,5 +20,9 @@ export const simulations: ChapterSimulations = {
   'message-queue': {
     how: MessageQueueSimulation,
     extreme: QueueExtremePanel,
+  },
+  caching: {
+    how: CacheSimulation,
+    extreme: CacheExtremePanel,
   },
 };

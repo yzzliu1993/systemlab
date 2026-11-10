@@ -6,6 +6,8 @@ import loadBalancingEn from '@/content/chapters/load-balancing/en.md?raw';
 import loadBalancingZh from '@/content/chapters/load-balancing/zh-TW.md?raw';
 import messageQueueEn from '@/content/chapters/message-queue/en.md?raw';
 import messageQueueZh from '@/content/chapters/message-queue/zh-TW.md?raw';
+import cachingEn from '@/content/chapters/caching/en.md?raw';
+import cachingZh from '@/content/chapters/caching/zh-TW.md?raw';
 
 export type ChapterEntry = Readonly<Record<Language, Chapter>>;
 export type RawChapters = Readonly<
@@ -43,4 +45,5 @@ export function buildRegistry(raws: RawChapters): ChapterEntry[] {
 export const chapters: readonly ChapterEntry[] = buildRegistry({
   'load-balancing': { en: loadBalancingEn, 'zh-TW': loadBalancingZh },
   'message-queue': { en: messageQueueEn, 'zh-TW': messageQueueZh },
+  caching: { en: cachingEn, 'zh-TW': cachingZh },
 });
