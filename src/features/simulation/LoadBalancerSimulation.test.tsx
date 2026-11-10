@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 const step = () =>
-  fireEvent.click(screen.getByRole('button', { name: 'Step' }));
+  fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
 const statsText = () => screen.getByLabelText('Stats').textContent;
 
 describe('LoadBalancerSimulation', () => {
@@ -27,35 +27,35 @@ describe('LoadBalancerSimulation', () => {
 
   it('T1: clicking Step moves tick 0 to tick 1', () => {
     render(<LoadBalancerSimulation />);
-    expect(screen.getByText(/Tick 0 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
     step();
-    expect(screen.getByText(/Tick 1 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 1 \//)).toBeInTheDocument();
   });
 
   it('T2: choosing least connections restarts at tick 0 with the same seed', () => {
     vi.useFakeTimers();
     render(<LoadBalancerSimulation />);
-    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
     act(() => {
       vi.advanceTimersByTime(500);
     });
-    expect(screen.queryByText(/Tick 0 of/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Time: 0 \//)).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Algorithm'), {
       target: { value: 'leastConnections' },
     });
-    expect(screen.getByText(/Tick 0 of/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Seed')).toHaveValue(7);
+    expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
+    expect(screen.getByLabelText('New set of requests')).toHaveValue(7);
   });
 
   it('T3: seed 7, 20 steps, reset and 20 steps gives the same stats', () => {
     render(<LoadBalancerSimulation />);
     for (let i = 0; i < 20; i += 1) step();
     const first = statsText();
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
-    expect(screen.getByText(/Tick 0 of/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
+    expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
     for (let i = 0; i < 20; i += 1) step();
     expect(statsText()).toBe(first);
-    expect(screen.getByText(/Tick 20 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 20 \//)).toBeInTheDocument();
   });
 
   it('T9: the text has no score, win, lose or countdown wording', () => {

@@ -7,7 +7,7 @@ import {
   AlgorithmPicker,
   Playback,
   RunView,
-  SeedField,
+  AdvancedSeed,
   buttonClass,
 } from '@/features/simulation/parts';
 import { PRESET_IDS, applyPreset } from '@/features/simulation/presets';
@@ -62,7 +62,7 @@ export default function ExtremeCasesPanel() {
             setSettings({ ...settings, algorithm })
           }
         />
-        <SeedField
+        <AdvancedSeed
           key={settings.seed}
           seed={settings.seed}
           onChange={(seed) => setSettings({ ...settings, seed })}
@@ -76,6 +76,7 @@ export default function ExtremeCasesPanel() {
         }}
       />
       <Playback
+        playHintKey="sim.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

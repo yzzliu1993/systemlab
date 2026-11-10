@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { DEFAULT_CACHE_SETTINGS } from '@/domain/simulation/cache';
 import CacheRunView from '@/features/simulation/CacheRunView';
-import { Playback, SeedField } from '@/features/simulation/parts';
+import { Playback, AdvancedSeed } from '@/features/simulation/parts';
 import { useCacheRun } from '@/features/simulation/useCacheRun';
 import { useT } from '@/stores/language';
 
@@ -16,9 +16,10 @@ export default function CacheSimulation() {
     <section className="flex flex-col gap-4">
       <h3 className="text-lg font-semibold">{t('sim.cache.how.title')}</h3>
       <div className="flex flex-wrap items-end gap-4">
-        <SeedField key={seed} seed={seed} onChange={setSeed} />
+        <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
       </div>
       <Playback
+        playHintKey="sim.cache.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

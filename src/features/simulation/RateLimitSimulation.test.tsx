@@ -14,7 +14,7 @@ beforeEach(() => {
 const click = (name: string) =>
   fireEvent.click(screen.getByRole('button', { name }));
 const step = (times = 1) => {
-  for (let i = 0; i < times; i += 1) click('Step');
+  for (let i = 0; i < times; i += 1) click('One step forward');
 };
 const stat = (label: string) =>
   Number(
@@ -25,10 +25,10 @@ const stat = (label: string) =>
 describe('RateLimitSimulation', () => {
   it('T2: Step moves tick 0 to tick 1 and shows accepted and rejected counts', () => {
     render(<RateLimitSimulation />);
-    expect(screen.getByText(/Tick 0 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
     expect(stat('Accepted')).toBe(0);
     step();
-    expect(screen.getByText(/Tick 1 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 1 \//)).toBeInTheDocument();
     expect(stat('Accepted')).toBeGreaterThan(0);
     expect(stat(en['sim.rl.stats.rejected'])).toBe(0);
   });
@@ -36,8 +36,8 @@ describe('RateLimitSimulation', () => {
   it('T2: Reset returns to tick 0', () => {
     render(<RateLimitSimulation />);
     step(5);
-    click('Reset');
-    expect(screen.getByText(/Tick 0 of/)).toBeInTheDocument();
+    click('Start over');
+    expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
   });
 
   it('has no score, win, lose or countdown wording', () => {
@@ -78,7 +78,7 @@ describe('RateLimitExtremePanel', () => {
       target: { value: 'backoff' },
     });
     click('Apply settings');
-    expect(screen.getByText(/Tick 0 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
     step(100);
     const backoff = stat('Retries');
     expect(immediate).toBeGreaterThan(0);
@@ -121,7 +121,7 @@ describe('RateLimitExtremePanel', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       en['sim.rl.error.clients'],
     );
-    expect(screen.getByText(/Tick 3 of/)).toBeInTheDocument();
+    expect(screen.getByText(/Time: 3 \//)).toBeInTheDocument();
   });
 });
 

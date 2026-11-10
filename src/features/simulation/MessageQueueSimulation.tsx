@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { DEFAULT_SETTINGS } from '@/domain/simulation/messageQueue';
-import { Playback, SeedField } from '@/features/simulation/parts';
+import { Playback, AdvancedSeed } from '@/features/simulation/parts';
 import QueueRunView from '@/features/simulation/QueueRunView';
 import { useQueueRun } from '@/features/simulation/useQueueRun';
 import { useT } from '@/stores/language';
@@ -15,8 +15,9 @@ export default function MessageQueueSimulation() {
   return (
     <section className="flex flex-col gap-4">
       <h3 className="text-lg font-semibold">{t('sim.mq.how.title')}</h3>
-      <SeedField key={seed} seed={seed} onChange={setSeed} />
+      <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
       <Playback
+        playHintKey="sim.mq.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}

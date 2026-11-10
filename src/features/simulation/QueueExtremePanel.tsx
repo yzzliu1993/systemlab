@@ -2,7 +2,11 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { DEFAULT_SETTINGS, PRESETS } from '@/domain/simulation/messageQueue';
 import type { Settings } from '@/domain/simulation/messageQueue';
-import { Playback, SeedField, buttonClass } from '@/features/simulation/parts';
+import {
+  Playback,
+  AdvancedSeed,
+  buttonClass,
+} from '@/features/simulation/parts';
 import QueueRunView from '@/features/simulation/QueueRunView';
 import QueueSettingsForm from '@/features/simulation/QueueSettingsForm';
 import { useQueueRun } from '@/features/simulation/useQueueRun';
@@ -49,7 +53,7 @@ export default function QueueExtremePanel() {
           </button>
         ))}
       </div>
-      <SeedField
+      <AdvancedSeed
         key={settings.seed}
         seed={settings.seed}
         onChange={(seed) => setSettings({ ...settings, seed })}
@@ -60,6 +64,7 @@ export default function QueueExtremePanel() {
         onApply={setSettings}
       />
       <Playback
+        playHintKey="sim.mq.play.hint"
         running={sim.running}
         complete={sim.complete}
         speed={sim.speed}
