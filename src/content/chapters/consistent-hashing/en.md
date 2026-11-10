@@ -6,7 +6,7 @@ summary: How to decide which machine owns which piece of data, so that adding or
 
 ## @situation
 
-A gym has four rows of lockers. Your locker is picked by the last digit of your phone number, divided by four. Then the gym adds a fifth row, and the rule changes to divide by five. Almost everyone's locker changes, and everyone has to move their things.
+A gym has four rows of lockers. Your locker is picked by the last digit of your phone number: the remainder after dividing by four. Then the gym adds a fifth row, and the rule changes to the remainder after dividing by five. The two rules agree only for the digits 0 to 3. The other 6 of the 10 possible digits get a new locker, so most people have to move their things.
 
 ## @terms
 
@@ -72,7 +72,7 @@ Things to try:
 - Redis Cluster splits keys into 16384 hash slots and moves slots between nodes when you reshard. [Redis Cluster spec](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/)
 - Discord routes each guild to a node by a lookup on a Hash ring. [Discord Elixir](https://discord.com/blog/how-discord-scaled-elixir-to-5-000-000-concurrent-users)
 - GitHub's load balancer uses Rendezvous hashing, so adding a server changes only about one row in N. [GitHub GLB Director](https://github.blog/engineering/infrastructure/glb-director-open-source-load-balancer/)
-- Cloudflare homes Workers on a ring, so adding a server re-homes only its neighbours. [Cloudflare shard and conquer](https://blog.cloudflare.com/eliminating-cold-starts-2-shard-and-conquer/)
+- Cloudflare homes Workers on a ring, so adding a server moves far fewer Workers than a plain hash table would. [Cloudflare shard and conquer](https://blog.cloudflare.com/eliminating-cold-starts-2-shard-and-conquer/)
 - In Envoy, ring hash affects about 1/N of the requests when a host changes. Maglev builds its table faster but moves more keys. [Envoy load balancers](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers) and [Maglev paper](https://research.google/pubs/maglev-a-fast-and-reliable-software-network-load-balancer/)
 
 ## @extreme
@@ -82,13 +82,13 @@ Use the presets in the simulation to push the system until it bends. Watch the m
 - Add a node: watch how many keys move. By our own count, going from 4 to 5 nodes moves about 4 in 5 keys with Modulo hashing. This is our own calculation, not a number from a source. Compare it with the ring.
 - Remove a node: watch where its keys go. With no virtual nodes, the next node clockwise takes all of them and its load jumps. With many virtual nodes, or with Rendezvous hashing, they spread over the other nodes.
 - No virtual nodes: each node has one point on the ring. Watch the key counts become uneven. Uneven load was a reason Dynamo moved to virtual nodes, as its paper explains in section 4.2.
-- Hot key: one key gets most of the requests. Watch one node take the load, whatever the rule. Discord saw a hot partition on a busy channel, as described in its post on [storing trillions of messages](https://discord.com/blog/how-discord-stores-trillions-of-messages).
+- Hot key: one key gets a large share of the requests. Watch one node take the load, whatever the rule. Discord saw a hot partition on a busy channel, as described in its post on [storing trillions of messages](https://discord.com/blog/how-discord-stores-trillions-of-messages).
 
 Uneven load and moving data are two separate problems. Consistent hashing helps with moving data. Virtual nodes help with uneven load. Neither fixes a Hot key.
 
 ## @config
 
-This Envoy cluster uses the ring hash policy. The ring size settings decide how many points the ring has, and a larger ring is more even. It is a minimal example; see the [Envoy load balancers page](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers) for every option.
+This Envoy cluster uses the ring hash policy. The ring size settings decide how many points the ring has, and a larger ring is more even. The backend endpoints (`load_assignment`) and a route `hash_policy` are left out, and the two ring sizes shown are Envoy's defaults. It is a minimal example; see the [Envoy load balancers page](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers) for every option.
 
 ```yaml
 clusters:
