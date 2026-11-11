@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import enChapter from '@/content/chapters/rate-limiting/en.md?raw';
 import zhChapter from '@/content/chapters/rate-limiting/zh-TW.md?raw';
 import en from '@/content/locales/en.json';
@@ -15,6 +15,19 @@ const click = (name: string) =>
   fireEvent.click(screen.getByRole('button', { name }));
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1) click('One step forward');
+};
+// Jumps forward by playing under fake timers: one render for many ticks.
+const jump = (ticks: number) => {
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
+    act(() => {
+      vi.advanceTimersByTime(ticks * 100);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '⏸ Pause' }));
+  } finally {
+    vi.useRealTimers();
+  }
 };
 const stat = (label: string) =>
   Number(
@@ -72,14 +85,14 @@ describe('RateLimitExtremePanel', () => {
   it('T3: in the retry storm preset, backoff gives fewer retries than immediate retries', () => {
     render(<RateLimitExtremePanel />);
     click('Retry storm');
-    step(100);
+    jump(100);
     const immediate = stat('Retries');
     fireEvent.change(screen.getByLabelText('Retry mode'), {
       target: { value: 'backoff' },
     });
     click('Apply settings');
     expect(screen.getByText(/Time: 0 \//)).toBeInTheDocument();
-    step(100);
+    jump(100);
     const backoff = stat('Retries');
     expect(immediate).toBeGreaterThan(0);
     expect(backoff).toBeLessThan(immediate);

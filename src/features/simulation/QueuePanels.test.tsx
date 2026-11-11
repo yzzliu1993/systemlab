@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import zh from '@/content/locales/zh-TW.json';
 import MessageQueueSimulation from '@/features/simulation/MessageQueueSimulation';
 import QueueExtremePanel from '@/features/simulation/QueueExtremePanel';
@@ -11,6 +11,19 @@ beforeEach(() => {
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
     fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
+};
+// Jumps forward by playing under fake timers: one render for many ticks.
+const jump = (ticks: number) => {
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
+    act(() => {
+      vi.advanceTimersByTime(ticks * 100);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '⏸ Pause' }));
+  } finally {
+    vi.useRealTimers();
+  }
 };
 const stat = (label: string) =>
   Number(
@@ -36,7 +49,7 @@ describe('message queue panels', () => {
     );
     expect(screen.getByLabelText('Visibility timeout (ticks)')).toHaveValue(3);
     expect(screen.getByLabelText('Idempotency on')).not.toBeChecked();
-    step(100);
+    jump(100);
     expect(stat('Redeliveries')).toBeGreaterThan(0);
   });
 
@@ -49,7 +62,7 @@ describe('message queue panels', () => {
     );
     fireEvent.click(screen.getByLabelText('Idempotency on'));
     fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
-    step(100);
+    jump(100);
     expect(stat('Redeliveries')).toBeGreaterThan(0);
     expect(stat('Duplicate side effects')).toBe(0);
   });
@@ -57,7 +70,7 @@ describe('message queue panels', () => {
   it('T5: the poison message preset ends in the dead-letter queue', () => {
     render(<QueueExtremePanel />);
     fireEvent.click(screen.getByRole('button', { name: 'Poison message' }));
-    step(120);
+    jump(120);
     expect(stat('Dead-lettered')).toBeGreaterThanOrEqual(1);
   });
 
@@ -90,7 +103,7 @@ describe('message queue panels', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
     };
     const first = processedAfterPreset();
-    step(100);
+    jump(100);
     const expected = stat('Processed');
     first.unmount();
 
@@ -102,7 +115,7 @@ describe('message queue panels', () => {
     ).value;
     setCost('1');
     setCost(original);
-    step(100);
+    jump(100);
     expect(stat('Processed')).toBe(expected);
   });
 

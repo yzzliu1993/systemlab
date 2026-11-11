@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import en from '@/content/locales/en.json';
 import zh from '@/content/locales/zh-TW.json';
 import CacheExtremePanel from '@/features/simulation/CacheExtremePanel';
@@ -12,6 +12,19 @@ beforeEach(() => {
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
     fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
+};
+// Jumps forward by playing under fake timers: one render for many ticks.
+const jump = (ticks: number) => {
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
+    act(() => {
+      vi.advanceTimersByTime(ticks * 100);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '⏸ Pause' }));
+  } finally {
+    vi.useRealTimers();
+  }
 };
 const stat = (label: string) =>
   within(screen.getByLabelText('Stats')).getByText(label).nextElementSibling!
@@ -42,7 +55,7 @@ describe('CacheExtremePanel', () => {
   it('T3: cache restart makes the hit rate fall after the restart', () => {
     render(<CacheExtremePanel />);
     fireEvent.click(screen.getByRole('button', { name: 'Cache restart' }));
-    step(199);
+    jump(199);
     const before = percent('Cache hit rate');
     step(1);
     const after = percent('Cache hit rate');
@@ -60,7 +73,7 @@ describe('CacheExtremePanel', () => {
         fireEvent.click(box);
         fireEvent.click(screen.getByRole('button', { name: 'Apply settings' }));
       }
-      step(210);
+      jump(210);
       const reads = Number(stat('Database reads'));
       unmount();
       return reads;

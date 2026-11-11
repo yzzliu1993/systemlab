@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import zh from '@/content/locales/zh-TW.json';
 import ExtremeCasesPanel from '@/features/simulation/ExtremeCasesPanel';
 import { useLanguage } from '@/stores/language';
@@ -10,6 +10,19 @@ beforeEach(() => {
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
     fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
+};
+// Jumps forward by playing under fake timers: one render for many ticks.
+const jump = (ticks: number) => {
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
+    act(() => {
+      vi.advanceTimersByTime(ticks * 100);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '⏸ Pause' }));
+  } finally {
+    vi.useRealTimers();
+  }
 };
 const preset = (name: string | RegExp) =>
   fireEvent.click(screen.getByRole('button', { name }));
@@ -47,9 +60,9 @@ describe('ExtremeCasesPanel', () => {
   it('T5: One server goes down shows it down with failed requests', () => {
     render(<ExtremeCasesPanel />);
     preset('One server goes down');
-    step(150);
+    jump(150);
     expect(screen.queryByText('Down')).not.toBeInTheDocument();
-    step(100);
+    jump(100);
     const first = screen.getByRole('region', { name: 'Server 1' });
     expect(within(first).getByText('Down')).toBeInTheDocument();
     const stats = screen.getByLabelText('Stats');
