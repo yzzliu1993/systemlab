@@ -9,7 +9,10 @@ import type {
   Settings,
   Strategy,
 } from '@/domain/simulation/consistentHashing';
-import { MAX_VIRTUAL_NODES } from '@/features/simulation/hashingLimits';
+import {
+  MAX_NODES,
+  MAX_VIRTUAL_NODES,
+} from '@/features/simulation/hashingLimits';
 import { buttonClass, fieldClass } from '@/features/simulation/parts';
 import { useT } from '@/stores/language';
 
@@ -25,7 +28,6 @@ type Draft = {
   removeId: string;
 };
 
-const MAX_NODES = 20;
 const MAX_KEYS = 10000;
 
 const nodeIdsFor = (count: number) =>

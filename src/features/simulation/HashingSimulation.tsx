@@ -10,7 +10,10 @@ import type {
   Strategy,
 } from '@/domain/simulation/consistentHashing';
 import HashingRunView from '@/features/simulation/HashingRunView';
-import { MAX_VIRTUAL_NODES } from '@/features/simulation/hashingLimits';
+import {
+  MAX_NODES,
+  MAX_VIRTUAL_NODES,
+} from '@/features/simulation/hashingLimits';
 import { buttonClass, fieldClass } from '@/features/simulation/parts';
 import { useT } from '@/stores/language';
 
@@ -27,6 +30,7 @@ export default function HashingSimulation() {
   const [removeId, setRemoveId] = useState('');
   const stats = useMemo(() => simulate(settings).before, [settings]);
   const nodeIds = settings.nodeIds;
+  const atLimit = nodeIds.length >= MAX_NODES;
   const selected = nodeIds.includes(removeId) ? removeId : nodeIds[0];
 
   const change = (type: 'add' | 'remove') => {
@@ -105,13 +109,22 @@ export default function HashingSimulation() {
             onChange={(event) => onVnodes(event.target.value)}
           />
         </div>
-        <button
-          type="button"
-          className={buttonClass}
-          onClick={() => change('add')}
-        >
-          {t('sim.ch.add')}
-        </button>
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            className={buttonClass}
+            disabled={atLimit}
+            aria-describedby={atLimit ? `${uid}-add-limit` : undefined}
+            onClick={() => change('add')}
+          >
+            {t('sim.ch.add')}
+          </button>
+          {atLimit && (
+            <p id={`${uid}-add-limit`} className="text-sm">
+              {t('sim.ch.addLimit')}
+            </p>
+          )}
+        </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={`${uid}-remove`} className="text-sm font-medium">
             {t('sim.ch.removeSelect')}

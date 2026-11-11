@@ -216,6 +216,7 @@
   "sim.ch.strategy.rendezvous": "Rendezvous hashing",
   "sim.ch.virtualNodes": "Virtual nodes per node",
   "sim.ch.add": "Add node",
+  "sim.ch.addLimit": "The group is at the limit of 20 nodes. Remove a node to add another.",
   "sim.ch.remove": "Remove node",
   "sim.ch.removeSelect": "Node to remove",
   "sim.ch.preset.addNode": "Add a node",
