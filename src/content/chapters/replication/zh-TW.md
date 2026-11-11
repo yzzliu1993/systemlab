@@ -91,8 +91,8 @@ summary: 如何把資料的副本放在好幾台機器上，以及副本落後�
 模擬中的預設情境會把複製推到極限。每一個都請看下面指出的計數器。
 
 - 「落後的從節點」：有一個從節點落後很多。讀取導向任一從節點時，看過時讀取的計數器，並觀察讀到自己的寫入能不能避開它們。
-- 「主節點故障（非同步）」：主節點停止，由一個從節點以升級接手。看遺失寫入的計數器。已確認但還沒複製出去的寫入就沒了。[MySQL semi-sync](https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html)、[MongoDB write concern](https://www.mongodb.com/docs/manual/reference/write-concern/)、[Redis replication](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/) 與 [GitHub 的 orchestrator](https://github.blog/engineering/infrastructure/orchestrator-github/) 都描述過同樣的風險。
-- 「主節點故障（同步）」：同樣的故障，但用同步模式。看遺失寫入的計數器，並和非同步的情境比較。也看寫入延遲的計數器，那是你付出的代價。RDS Multi-AZ 的故障轉移通常要一到兩分鐘，[AWS Multi-AZ 頁面](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html)是這樣說的。MongoDB 選舉進行時無法寫入，[選舉文件](https://www.mongodb.com/docs/manual/core/replica-set-elections/)是這樣說的。
+- 「主節點故障（非同步）」：主節點停止，由一個從節點以升級接手。看遺失寫入的計數器。已確認但還沒複製出去的寫入就沒了。[MySQL 非同步複製](https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html)、[MongoDB 的 w:1 寫入](https://www.mongodb.com/docs/manual/reference/write-concern/)與 [Redis 非同步複製](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)都描述過同樣的風險：已確認的寫入在故障轉移時仍可能遺失。[GitHub 的 orchestrator](https://github.blog/engineering/infrastructure/orchestrator-github/) 文章則指出，對 master 做的某些更新可能永遠沒有傳到任何 replica。
+- 「主節點故障（同步）」：同樣的故障，但用同步模式。看遺失寫入的計數器，並和非同步的情境比較。也看寫入延遲的計數器，那是你付出的代價。關於 RDS Multi-AZ，[AWS 表示](https://aws.amazon.com/rds/features/multi-az/)故障轉移通常在一到兩分鐘內完成。MongoDB 選舉進行時無法寫入，[選舉文件](https://www.mongodb.com/docs/manual/core/replica-set-elections/)是這樣說的。
 - 「網路分割」：網路斷成兩半，兩邊都可能接受寫入。看衝突的計數器。在 GitHub 的 [2018 年 10 月事件](https://github.blog/news-insights/company-news/oct21-post-incident-analysis/)中，一次短暫的網路中斷導致另一個區域的升級。之後兩邊各自有對方沒有的寫入，所以切回原本的一邊並不安全。「腦裂」是我們對這類情況的稱呼，不是 GitHub 的用語。[Redis Sentinel](https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/) 警告過類似的情形：被分割隔開的舊 master 可能繼續接受寫入，分割恢復時這些寫入就會遺失。
 
 寫入快、讀取新、資料不遺失，這三件事無法同時全部做到。每個設定都是選擇要放棄哪一個。
@@ -113,6 +113,7 @@ synchronous_commit = on
 - [MySQL, semi-synchronous replication](https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html)
 - [Amazon RDS, read replicas](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html)
 - [Amazon RDS, Multi-AZ with one standby](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html)
+- [Amazon RDS, Multi-AZ features](https://aws.amazon.com/rds/features/multi-az/)
 - [MongoDB, replica set elections](https://www.mongodb.com/docs/manual/core/replica-set-elections/)
 - [MongoDB, write concern](https://www.mongodb.com/docs/manual/reference/write-concern/)
 - [Redis, replication](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)
