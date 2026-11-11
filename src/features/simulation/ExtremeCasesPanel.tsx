@@ -63,7 +63,6 @@ export default function ExtremeCasesPanel() {
           }
         />
         <AdvancedSeed
-          key={settings.seed}
           seed={settings.seed}
           onChange={(seed) => setSettings({ ...settings, seed })}
         />

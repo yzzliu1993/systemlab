@@ -56,7 +56,6 @@ export default function RateLimitExtremePanel() {
         ))}
       </div>
       <AdvancedSeed
-        key={settings.seed}
         seed={settings.seed}
         onChange={(seed) => setSettings({ ...settings, seed })}
       />

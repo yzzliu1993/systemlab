@@ -54,7 +54,6 @@ export default function QueueExtremePanel() {
         ))}
       </div>
       <AdvancedSeed
-        key={settings.seed}
         seed={settings.seed}
         onChange={(seed) => setSettings({ ...settings, seed })}
       />

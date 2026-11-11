@@ -28,7 +28,7 @@ export default function LoadBalancerSimulation() {
       <h3 className="text-lg font-semibold">{t('sim.how.title')}</h3>
       <div className="flex flex-wrap items-end gap-4">
         <AlgorithmPicker value={algorithm} onChange={setAlgorithm} />
-        <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
+        <AdvancedSeed seed={seed} onChange={setSeed} />
       </div>
       <Playback
         playHintKey="sim.play.hint"

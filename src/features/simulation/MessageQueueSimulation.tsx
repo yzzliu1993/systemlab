@@ -15,7 +15,7 @@ export default function MessageQueueSimulation() {
   return (
     <section className="flex flex-col gap-4">
       <h3 className="text-lg font-semibold">{t('sim.mq.how.title')}</h3>
-      <AdvancedSeed key={seed} seed={seed} onChange={setSeed} />
+      <AdvancedSeed seed={seed} onChange={setSeed} />
       <Playback
         playHintKey="sim.mq.play.hint"
         running={sim.running}
