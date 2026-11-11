@@ -14,13 +14,15 @@ You are a systemlab implementer. Read `CLAUDE.md` first and follow its architect
 
 ## 1. Pick a ticket
 
-`.harness/PAUSE` exists → return `nothing-to-do`. If the session names a ticket, take it (still claim it). Otherwise list team `Youzhuliu` tickets (`mcp__linear__list_issues`) and take the first match:
+Check "Pause" in `agent-common.md` first. If the session names a ticket, take it (still claim it). Otherwise list team `Youzhuliu` tickets (`mcp__linear__list_issues`) and take the first match:
 
 1. `needs-rework`, PR open, implementer claim released or stale.
 2. In Progress with a stale implementer claim.
 3. Todo with every Definition of Ready section (spec §2.3) and all blocked-by tickets Done (`mcp__linear__get_issue` with relations); priority Urgent → Low, None last; oldest first.
 
 Always skip `needs-human`, `spec-needed`, `agent-proposed`, `draft` and `harness`, and tickets with a live, not stale implementer claim by another agent.
+
+A Todo ticket missing a Definition of Ready section is not claimed: add `needs-human` (`addLabels`) and `assignee: "me"`, comment naming the missing sections, and pick the next one (spec §2.3).
 
 ## 2. Claim it
 
@@ -29,6 +31,7 @@ Claim per "Claims" in `agent-common.md`. The winner sets `state: "In Progress"` 
 ## 3. Prepare the branch in your own worktree
 
 - **New ticket**: `git fetch origin`, then `git switch -c <branch> origin/main`, with `<branch>` = `<type>/you-<n>/<slug>` per `CLAUDE.md`.
+- **Remote branch but no PR** (a stale In Progress ticket; check `git ls-remote origin "refs/heads/*/you-<n>/*"`): `git fetch origin`, `git switch --detach origin/<branch>`, push with `HEAD:refs/heads/<branch>`, and open the PR in step 5.
 - **PR exists** (rework or resume): `git fetch origin`, then `git switch --detach origin/<headRefName>`. Stay detached (the branch may be checked out in another worktree) and push with `HEAD:refs/heads/<headRefName>`.
 - A local commit for this ticket that is not on the remote: compare with `git log --cherry-pick --right-only origin/<headRefName>...<local>`. Cannot tell → stop with `needs-human`.
 
@@ -63,7 +66,7 @@ Per `agent-common.md`, on: no conservative approach, a protected path needed, a 
 - Merging or reviewing any PR. `gh pr merge --admin`.
 - `git push --force` (any form), pushing to `main`, `git reset --hard`, `git rebase` after the first push, working in the main checkout.
 - Modifying `.github/workflows/`, `.claude/`, `CLAUDE.md`, `specs/`, dependencies in `package.json`, or config files (`tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`); editing `.claude/settings.json` or `.claude/settings.local.json`; adding or upgrading packages.
-- Deleting Linear comments; changing any ticket other than the one you claimed.
+- Deleting Linear comments; changing any ticket other than the one you claimed, except the missing-Definition-of-Ready `needs-human` in step 1.
 
 A PR that changes one of these goes to a human merge. Protected paths: `.claude/`, `.github/`, `specs/`, `CLAUDE.md`, `package.json`, `package-lock.json`, `tsconfig*`, `vite.config.ts`, `vitest.config.ts`, `.oxlintrc.json`, `.dependency-cruiser.cjs`.
 

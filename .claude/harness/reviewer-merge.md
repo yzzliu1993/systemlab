@@ -23,10 +23,11 @@ Use fresh values from GitHub, never memory:
   `gh pr merge <n> --subject "<type>(<ID>): <description> (#<n>)" --match-head-commit <sha> --squash`
   `<type>` is the start of the PR's branch name; `<description>` is a short plain English phrase with no quotes, backticks or `$`. Success → "Close out". An error → hand to the human with the error.
 - **`BEHIND`** (main moved):
-  1. `git fetch origin`. Record `O=<sha>` and `B=$(git merge-base <sha> origin/main)`.
+  Run each command on its own and copy the printed sha into the next one; do not use `$(...)` or shell variables, so the commands match the allow rules.
+  1. `git fetch origin`. Note `O` = `<sha>`, and `B` = the output of `git merge-base <O> origin/main`.
   2. `gh pr update-branch <n> --rebase`.
   3. Read `gh pr view <n> --json headRefOid` until it differs from `O`; that is `N`. Wait for CI on `N` (reviewer.md step 3).
-  4. `git fetch origin`, `NB=$(git merge-base N origin/main)`, `git range-diff B..O NB..N`. The patch is unchanged when every commit pair is marked `=`.
+  4. `git fetch origin`; `NB` = the output of `git merge-base <N> origin/main`; then `git range-diff <B>..<O> <NB>..<N>`. The patch is unchanged when every commit pair is marked `=`.
   5. Unchanged and CI green → review `N` from reviewer.md step 4 (a new harness review for the new sha; the round count goes up) and act on that verdict. Green CI on `N` covers semantic clashes with new code on `main`, which the patch check cannot catch.
   6. Patch changed, update-branch conflict, or red CI → return with `needs-rework` (as in "changes_requested"), saying what changed.
 - **`DIRTY`** (conflicts) → return with `needs-rework`; the implementer resolves with `git merge origin/main`.

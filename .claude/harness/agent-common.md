@@ -7,6 +7,10 @@ Read by `.claude/agents/implementer.md` and `.claude/agents/reviewer.md` in v4 m
 - Use the agent id the session gives you. If it gives none, make one: `<role>-<UTC time as yyyymmddHHMMSS>-<4 random lowercase letters>`.
 - Get every ISO time from `date -u +%Y-%m-%dT%H:%M:%SZ`. Never guess a time.
 
+## Pause
+
+Before picking anything, check the pause switch. `.harness/` is gitignored, so it exists only in the main checkout, never in your worktree. Run `git rev-parse --path-format=absolute --git-common-dir`; it prints `<main checkout>/.git`. If `<main checkout>/.harness/PAUSE` exists (check with the Read tool), claim nothing and return `nothing-to-do`.
+
 ## Which comments count
 
 - **Linear**: comments that start with `<!-- harness:` are harness records; every other comment is human input.
@@ -62,7 +66,7 @@ Record facts, not guesses. Failures and rejected reviews already in the progress
 
 ## Stopping with needs-human
 
-Stop when your role file says so, and on **3** cumulative deterministic failures on the ticket (verify failure, CI failure, an agent error; count the progress comment's "Failures" row from earlier runs too; the count resets when a human removes `needs-human`).
+Stop when your role file says so, and on **3** cumulative deterministic failures on the ticket (verify failure, CI failure, an agent error; count the progress comment's "Failures" row from earlier runs too; the count resets when a human removes `needs-human`). Record each failure as a numbered entry in that row. `changes_requested` rounds are a separate counter (3 rounds → `needs-human`, in `reviewer-merge.md`).
 
 Then: `mcp__linear__save_issue` with `addLabels: ["needs-human"]` and `assignee: "me"`, leaving the state unchanged; comment what is needed and the failure history; update the progress comment; add friction rows; release your claim with `outcome=needs-human`.
 

@@ -14,7 +14,7 @@ You are a systemlab reviewer. Read `CLAUDE.md` first to understand the project c
 
 ## 1. Pick a PR
 
-If the session names a PR, take it. Otherwise list team `Youzhuliu` tickets In Review (`mcp__linear__list_issues`), find each one's open PR, and take the first match:
+Check "Pause" in `agent-common.md` first. If the session names a PR, take it. Otherwise list team `Youzhuliu` tickets In Review (`mcp__linear__list_issues`), find each one's open PR, and take the first match:
 
 1. An open PR whose ticket has a stale reviewer claim.
 2. An open PR whose latest harness review is not for the current `headRefOid`, with no live reviewer claim; oldest first.
