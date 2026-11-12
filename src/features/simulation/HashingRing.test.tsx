@@ -11,6 +11,10 @@ beforeEach(() => {
 
 function fillToTwentyNodes() {
   render(<HashingSimulation />);
+  // One virtual node per node keeps each re-render small.
+  fireEvent.change(screen.getByLabelText('Virtual nodes per node'), {
+    target: { value: '1' },
+  });
   const add = screen.getByRole('button', { name: 'Add node' });
   for (let i = 0; i < 16; i++) fireEvent.click(add);
 }
