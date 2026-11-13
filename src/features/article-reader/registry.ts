@@ -13,6 +13,8 @@ import rateLimitingZh from '@/content/chapters/rate-limiting/zh-TW.md?raw';
 
 import consistentHashingEn from '@/content/chapters/consistent-hashing/en.md?raw';
 import consistentHashingZh from '@/content/chapters/consistent-hashing/zh-TW.md?raw';
+import replicationEn from '@/content/chapters/replication/en.md?raw';
+import replicationZh from '@/content/chapters/replication/zh-TW.md?raw';
 
 export type ChapterEntry = Readonly<Record<Language, Chapter>>;
 export type RawChapters = Readonly<
@@ -56,4 +58,5 @@ export const chapters: readonly ChapterEntry[] = buildRegistry({
     en: consistentHashingEn,
     'zh-TW': consistentHashingZh,
   },
+  replication: { en: replicationEn, 'zh-TW': replicationZh },
 });

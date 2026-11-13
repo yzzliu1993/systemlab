@@ -9,6 +9,8 @@ import MessageQueueSimulation from '@/features/simulation/MessageQueueSimulation
 import QueueExtremePanel from '@/features/simulation/QueueExtremePanel';
 import RateLimitExtremePanel from '@/features/simulation/RateLimitExtremePanel';
 import RateLimitSimulation from '@/features/simulation/RateLimitSimulation';
+import ReplicationExtremePanel from '@/features/simulation/ReplicationExtremePanel';
+import ReplicationSimulation from '@/features/simulation/ReplicationSimulation';
 
 export type SlotName = 'how' | 'extreme';
 export type ChapterSimulations = Readonly<
@@ -36,5 +38,9 @@ export const simulations: ChapterSimulations = {
   'consistent-hashing': {
     how: HashingSimulation,
     extreme: HashingExtremePanel,
+  },
+  replication: {
+    how: ReplicationSimulation,
+    extreme: ReplicationExtremePanel,
   },
 };

@@ -51,7 +51,12 @@ describe('hashing ring performance and limits', () => {
   it('T3: zh-TW simulation strings use one tick word and no tick or 步', () => {
     const strings = Object.entries(zh)
       .filter(([key]) => key.startsWith('sim.'))
-      .map(([, value]) => String(value).replace(/\{tick\}/g, ''));
+      // 同步 is the chapter's term for synchronous (in 非同步複製 too), not the old tick word.
+      .map(([, value]) =>
+        String(value)
+          .replace(/\{tick\}/g, '')
+          .replace(/同步/g, ''),
+      );
     for (const text of strings) {
       expect(text).not.toMatch(/tick/i);
       expect(text).not.toContain('步');
