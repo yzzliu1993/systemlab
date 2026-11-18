@@ -1,6 +1,6 @@
 # systemlab
 
-A React 19 + TypeScript + Vite single-page app. Claude Code drives development from Linear tickets: sessions dispatch independent agents (`/plan`, `/work`, `/review`, `/status`) that each claim their own ticket or PR, and `/retro` turns problems from real runs into improvement tickets. See `specs/HARNESS_SPEC.md` for the spec.
+Claude Code drives development from Linear tickets: sessions dispatch independent agents (`/plan`, `/work`, `/review`, `/status`) that each claim their own ticket or PR, and `/retro` turns problems from real runs into improvement tickets. See `specs/HARNESS_SPEC.md` for the spec.
 
 The product teaches system design to engineers with no background in it, one chapter per topic, with terms, tools, browser simulations and real-world cases. See [PRODUCT.md](PRODUCT.md) for the direction.
 
@@ -9,23 +9,8 @@ The product teaches system design to engineers with no background in it, one cha
 | Command | Purpose |
 |---|---|
 | `npm run verify` | **Required before committing**: lint → typecheck → architecture check → tests, same as CI |
-| `npm run test` | Run all tests once |
-| `npx vitest run <path>` | Run only the given test file |
-| `npm run dev` | Local dev server |
 
 ## Architecture layers
-
-```
-src/
-  app/             App assembly: routes, global providers
-  components/      UI components shared across features
-  features/        UI and logic per feature (article-reader, game-arena, roadmap-view)
-  domain/          Pure TypeScript domain logic (roadmap, game), no React dependency
-  stores/          zustand state
-  infrastructure/  storage (IndexedDB / idb), workers (Web Worker / comlink)
-  content/         Static content
-  test/            Shared test setup
-```
 
 Dependency rules (enforced by `npm run arch:check`; a violation fails CI):
 - `domain/` **must not** import `components/`, `features/` or `stores/`, and must not import `react`.
@@ -40,12 +25,10 @@ Put new logic in `domain/` as pure functions first. The UI layer only calls it a
 - `erasableSyntaxOnly` is on: **do not use** `enum`, `namespace` or constructor parameter properties (`constructor(private x)`). Use a union type or an `as const` object instead of an enum.
 - `strict`, `noUnusedLocals` and `noUnusedParameters` are on. Prefix unused parameters with `_`.
 - Use `zod` for runtime data validation, `immer` for immutable updates, and `clsx` + `tailwind-merge` for className composition.
-- Styling uses Tailwind CSS v4.
 
 ## Testing conventions
 
 - Test files live next to the source: `foo.ts` → `foo.test.ts`, and for components `Foo.tsx` → `Foo.test.tsx`.
-- The test environment is happy-dom. `describe` / `it` / `expect` are globals.
 - `domain/` tests must not render React components.
 - Component tests use `@testing-library/react` + `@testing-library/user-event`. Query by user-visible text or role, not by class or other implementation details beyond test ids.
 - Mock network requests with `msw`. Never call real external services.

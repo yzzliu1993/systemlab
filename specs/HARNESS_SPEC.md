@@ -187,7 +187,7 @@ Guardrails:
 | ticket-writer | Read, Glob, Grep, Linear (read, create and update issues, comments, labels) | sonnet | 40 |
 | implementer | Read, Edit, Write, Glob, Grep, Bash, Linear (its claimed ticket) | sonnet | 150 |
 | reviewer | Read, Glob, Grep, Bash (git, `gh`, no file edits), Linear (its claimed ticket) | sonnet | 80 |
-| researcher | Read, Glob, Grep, WebSearch, WebFetch | sonnet | 40 |
+| researcher | Read, Glob, Grep, WebSearch, WebFetch | haiku | 40 |
 
 - A session dispatches implementers and reviewers with worktree isolation, so each works in its own worktree. The main checkout is left to you. A worktree is removed when its agent ends.
 - Each agent ends with a json block (format in its definition file) that the session reads to report the result. `researcher` ends with markdown sections instead.
@@ -315,7 +315,7 @@ CLAUDE.md                # Project conventions (agents read it too)
 | Where it runs | Local Windows 11, Claude Code opened in the repo directory; any number of sessions |
 | Working directory | Each agent works in its own worktree; the main checkout is left to you |
 | Trigger | Manual `/plan`, `/work`, `/review`; `/loop` when needed |
-| Claude billing | Pro subscription; agents use sonnet, sessions use the model you choose |
+| Claude billing | Pro subscription; agents use sonnet (researcher uses haiku), sessions use the model you choose |
 | Merge | A reviewer merges per §5.1; protected paths are merged by you |
 
 ### 10.1 One-time setup
