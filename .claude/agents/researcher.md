@@ -2,7 +2,7 @@
 name: researcher
 description: Gathers outside information from several sources and returns a short, checkable summary. Read-only. Use it for questions that need many sources or split into independent parts; one or two lookups stay in the main session. Called by hand from the main session.
 tools: Read, Glob, Grep, WebSearch, WebFetch
-model: sonnet
+model: haiku
 maxTurns: 40
 background: false
 color: cyan
