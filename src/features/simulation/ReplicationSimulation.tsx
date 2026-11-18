@@ -109,7 +109,7 @@ export default function ReplicationSimulation() {
         onStep={sim.step}
         onReset={sim.reset}
       />
-      <ReplicationRunView run={sim.run} />
+      <ReplicationRunView run={sim.run} running={sim.running} />
     </section>
   );
 }

@@ -41,7 +41,7 @@ export default function LoadBalancerSimulation() {
         onStep={sim.step}
         onReset={sim.reset}
       />
-      <RunView run={sim.runs[0]!} />
+      <RunView run={sim.runs[0]!} running={sim.running} />
     </section>
   );
 }
