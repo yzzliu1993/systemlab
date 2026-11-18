@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { getTotals } from '@/domain/simulation/replication';
 import type { RunState } from '@/domain/simulation/replication';
-import { fill } from '@/features/simulation/parts';
+import { LiveSummary, fill } from '@/features/simulation/parts';
 import { useT } from '@/stores/language';
 
 type NodeRole = 'leader' | 'follower' | 'down' | 'cutOff';
@@ -15,7 +15,13 @@ function roleOf(run: RunState, i: number): NodeRole {
 }
 
 /** The run on screen: tick, leader and followers, stats row. */
-export default function ReplicationRunView({ run }: { run: RunState }) {
+export default function ReplicationRunView({
+  run,
+  running = false,
+}: {
+  run: RunState;
+  running?: boolean;
+}) {
   const t = useT();
   const totals = getTotals(run);
   const total = run.settings.ticks;
@@ -49,15 +55,16 @@ export default function ReplicationRunView({ run }: { run: RunState }) {
         {fill(t('sim.tick'), { tick: run.tick, total })}
         {run.tick >= total && ` ${t('sim.complete')}`}
       </p>
-      <p aria-live="polite" className="sr-only">
-        {fill(t('sim.repl.stats.summary'), {
+      <LiveSummary
+        running={running}
+        text={fill(t('sim.repl.stats.summary'), {
           tick: run.tick,
           acked: totals.writesAcked,
           stale: totals.staleReads,
           lost: totals.lostWrites,
           conflicts: totals.conflicts,
         })}
-      </p>
+      />
       <ul
         className="flex flex-wrap gap-3"
         aria-label={t('sim.repl.nodes.title')}

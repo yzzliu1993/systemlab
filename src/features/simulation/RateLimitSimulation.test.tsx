@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import enChapter from '@/content/chapters/rate-limiting/en.md?raw';
 import zhChapter from '@/content/chapters/rate-limiting/zh-TW.md?raw';
 import en from '@/content/locales/en.json';
@@ -6,6 +6,7 @@ import zh from '@/content/locales/zh-TW.json';
 import RateLimitExtremePanel from '@/features/simulation/RateLimitExtremePanel';
 import RateLimitSimulation from '@/features/simulation/RateLimitSimulation';
 import { useLanguage } from '@/stores/language';
+import { jump } from '@/test/jump';
 
 beforeEach(() => {
   useLanguage.setState({ language: 'en' });
@@ -15,19 +16,6 @@ const click = (name: string) =>
   fireEvent.click(screen.getByRole('button', { name }));
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1) click('One step forward');
-};
-// Jumps forward by playing under fake timers: one render for many ticks.
-const jump = (ticks: number) => {
-  vi.useFakeTimers();
-  try {
-    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
-    act(() => {
-      vi.advanceTimersByTime(ticks * 100);
-    });
-    fireEvent.click(screen.getByRole('button', { name: '⏸ Pause' }));
-  } finally {
-    vi.useRealTimers();
-  }
 };
 const stat = (label: string) =>
   Number(

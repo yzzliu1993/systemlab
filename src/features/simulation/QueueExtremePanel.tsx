@@ -73,7 +73,7 @@ export default function QueueExtremePanel() {
         onStep={sim.step}
         onReset={sim.reset}
       />
-      <QueueRunView run={sim.run} />
+      <QueueRunView run={sim.run} running={sim.running} />
     </section>
   );
 }

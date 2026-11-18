@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import type { Settings, TickStats } from '@/domain/simulation/rateLimit';
-import { fill } from '@/features/simulation/parts';
+import { LiveSummary, fill } from '@/features/simulation/parts';
 import { noisyClients } from '@/features/simulation/rateLimitSettings';
 import { totalsAt } from '@/features/simulation/useRateLimitRun';
 import { useT } from '@/stores/language';
@@ -10,10 +10,12 @@ export default function RateLimitView({
   settings,
   history,
   tick,
+  running = false,
 }: {
   settings: Settings;
   history: readonly TickStats[];
   tick: number;
+  running?: boolean;
 }) {
   const t = useT();
   const total = history.length;
@@ -36,8 +38,9 @@ export default function RateLimitView({
         {fill(t('sim.tick'), { tick, total })}
         {tick >= total && ` ${t('sim.complete')}`}
       </p>
-      <p aria-live="polite" className="sr-only">
-        {fill(t('sim.rl.stats.summary'), {
+      <LiveSummary
+        running={running}
+        text={fill(t('sim.rl.stats.summary'), {
           tick,
           sent: stats.sent,
           accepted: stats.accepted,
@@ -45,7 +48,7 @@ export default function RateLimitView({
           shed: stats.shed,
           retries: stats.retries,
         })}
-      </p>
+      />
       <ul
         className="flex flex-wrap gap-3"
         aria-label={t('sim.rl.clients.title')}

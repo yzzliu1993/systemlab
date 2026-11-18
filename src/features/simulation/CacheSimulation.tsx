@@ -29,7 +29,7 @@ export default function CacheSimulation() {
         onStep={sim.step}
         onReset={sim.reset}
       />
-      <CacheRunView run={sim.run} />
+      <CacheRunView run={sim.run} running={sim.running} />
     </section>
   );
 }

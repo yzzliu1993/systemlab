@@ -1,9 +1,10 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import en from '@/content/locales/en.json';
 import zh from '@/content/locales/zh-TW.json';
 import CacheExtremePanel from '@/features/simulation/CacheExtremePanel';
 import CacheSimulation from '@/features/simulation/CacheSimulation';
 import { useLanguage } from '@/stores/language';
+import { jump } from '@/test/jump';
 
 beforeEach(() => {
   useLanguage.setState({ language: 'en' });
@@ -12,19 +13,6 @@ beforeEach(() => {
 const step = (times = 1) => {
   for (let i = 0; i < times; i += 1)
     fireEvent.click(screen.getByRole('button', { name: 'One step forward' }));
-};
-// Jumps forward by playing under fake timers: one render for many ticks.
-const jump = (ticks: number) => {
-  vi.useFakeTimers();
-  try {
-    fireEvent.click(screen.getByRole('button', { name: '▶ Start' }));
-    act(() => {
-      vi.advanceTimersByTime(ticks * 100);
-    });
-    fireEvent.click(screen.getByRole('button', { name: '⏸ Pause' }));
-  } finally {
-    vi.useRealTimers();
-  }
 };
 const stat = (label: string) =>
   within(screen.getByLabelText('Stats')).getByText(label).nextElementSibling!

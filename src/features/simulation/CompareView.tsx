@@ -57,7 +57,7 @@ export default function CompareView({ settings }: { settings: Settings }) {
               value={value}
               onChange={set}
             />
-            <RunView run={sim.runs[i]!} />
+            <RunView run={sim.runs[i]!} running={sim.running} />
           </section>
         ))}
       </div>

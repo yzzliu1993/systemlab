@@ -96,6 +96,7 @@ export default function RateLimitSimulation() {
         settings={settings}
         history={sim.history}
         tick={sim.tick}
+        running={sim.running}
       />
     </section>
   );

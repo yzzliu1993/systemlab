@@ -239,7 +239,13 @@ export function Playback({
 const MAX_QUEUE_BOXES = 20;
 
 /** The run on screen: tick, servers with queues, stats row. */
-export function RunView({ run }: { run: RunState }) {
+export function RunView({
+  run,
+  running = false,
+}: {
+  run: RunState;
+  running?: boolean;
+}) {
   const t = useT();
   const stats = getStats(run);
   const total = run.settings.ticks;
@@ -257,15 +263,16 @@ export function RunView({ run }: { run: RunState }) {
         {fill(t('sim.tick'), { tick: stats.tick, total })}
         {stats.tick >= total && ` ${t('sim.complete')}`}
       </p>
-      <p aria-live="polite" className="sr-only">
-        {fill(t('sim.stats.summary'), {
+      <LiveSummary
+        running={running}
+        text={fill(t('sim.stats.summary'), {
           tick: stats.tick,
           arrived: stats.arrivals,
           finished: stats.finished,
           failed: stats.failed,
           waiting: stats.waiting,
         })}
-      </p>
+      />
       <ul className="flex flex-wrap gap-3" aria-label={t('sim.servers.title')}>
         {run.servers.map((server, i) => {
           const s = stats.servers[i]!;
@@ -331,3 +338,24 @@ export function RunView({ run }: { run: RunState }) {
 }
 
 export { buttonClass, fieldClass };
+
+/**
+ * Screen-reader summary of the stats. While a run plays it holds the text
+ * from before play, so the live region stays quiet; on pause, end, Step or
+ * Apply it shows the current text and is announced once.
+ */
+export function LiveSummary({
+  text,
+  running,
+}: {
+  text: string;
+  running: boolean;
+}) {
+  const [held, setHeld] = useState(text);
+  if (!running && held !== text) setHeld(text);
+  return (
+    <p aria-live="polite" className="sr-only">
+      {running ? held : text}
+    </p>
+  );
+}

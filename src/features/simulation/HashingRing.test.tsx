@@ -9,6 +9,21 @@ beforeEach(() => {
   useLanguage.setState({ language: 'en' });
 });
 
+// 非同步複製 and 同步複製 (also （非同步） and （同步） in preset labels) are the replication chapter's terms, not the old tick word.
+function tickWordViolations(text: string) {
+  const checked = text
+    .replace(/\{tick\}/g, '')
+    .replace(/非同步複製/g, '')
+    .replace(/同步複製/g, '')
+    // The two preset labels name the mode in parentheses.
+    .replace(/（非同步）/g, '')
+    .replace(/（同步）/g, '');
+  const found: string[] = [];
+  if (/tick/i.test(checked)) found.push('tick');
+  if (checked.includes('步')) found.push('步');
+  return found;
+}
+
 function fillToTwentyNodes() {
   render(<HashingSimulation />);
   // One virtual node per node keeps each re-render small.
@@ -51,17 +66,15 @@ describe('hashing ring performance and limits', () => {
   it('T3: zh-TW simulation strings use one tick word and no tick or 步', () => {
     const strings = Object.entries(zh)
       .filter(([key]) => key.startsWith('sim.'))
-      // 同步 is the chapter's term for synchronous (in 非同步複製 too), not the old tick word.
-      .map(([, value]) =>
-        String(value)
-          .replace(/\{tick\}/g, '')
-          .replace(/同步/g, ''),
-      );
-    for (const text of strings) {
-      expect(text).not.toMatch(/tick/i);
-      expect(text).not.toContain('步');
-    }
+      .map(([, value]) => String(value));
+    for (const text of strings) expect(tickWordViolations(text)).toEqual([]);
     expect(zh['sim.step']).toContain('格');
     expect(Object.keys(zh)).toEqual(expect.arrayContaining(Object.keys(en)));
+  });
+
+  it('T4: a lone 步 in a zh-TW simulation string fails the check', () => {
+    expect(tickWordViolations('走一步')).toEqual(['步']);
+    expect(tickWordViolations('同步率')).toEqual(['步']);
+    expect(tickWordViolations('同步複製與非同步複製')).toEqual([]);
   });
 });

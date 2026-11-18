@@ -1,6 +1,6 @@
 import { getStats } from '@/domain/simulation/messageQueue';
 import type { RunState } from '@/domain/simulation/messageQueue';
-import { fill } from '@/features/simulation/parts';
+import { LiveSummary, fill } from '@/features/simulation/parts';
 import { useT } from '@/stores/language';
 
 const MAX_SHOWN = 12;
@@ -25,7 +25,13 @@ function IdList({ ids, label }: { ids: number[]; label: string }) {
 }
 
 /** The run on screen: tick, queue, in-flight messages, consumers, stats row. */
-export default function QueueRunView({ run }: { run: RunState }) {
+export default function QueueRunView({
+  run,
+  running = false,
+}: {
+  run: RunState;
+  running?: boolean;
+}) {
   const t = useT();
   const stats = getStats(run);
   const total = run.settings.ticks;
@@ -47,8 +53,9 @@ export default function QueueRunView({ run }: { run: RunState }) {
         {fill(t('sim.tick'), { tick: stats.tick, total })}
         {stats.tick >= total && ` ${t('sim.complete')}`}
       </p>
-      <p aria-live="polite" className="sr-only">
-        {fill(t('sim.mq.stats.summary'), {
+      <LiveSummary
+        running={running}
+        text={fill(t('sim.mq.stats.summary'), {
           tick: stats.tick,
           backlog: stats.backlog,
           processed: stats.processed,
@@ -56,7 +63,7 @@ export default function QueueRunView({ run }: { run: RunState }) {
           duplicates: stats.duplicateSideEffects,
           deadLettered: stats.deadLettered,
         })}
-      </p>
+      />
       <section aria-label={t('sim.mq.queue.title')} className="text-sm">
         <h4 className="font-semibold">{t('sim.mq.queue.title')}</h4>
         <p>{fill(t('sim.mq.queue.count'), { n: visible.length })}</p>

@@ -27,7 +27,7 @@ export default function MessageQueueSimulation() {
         onStep={sim.step}
         onReset={sim.reset}
       />
-      <QueueRunView run={sim.run} />
+      <QueueRunView run={sim.run} running={sim.running} />
     </section>
   );
 }

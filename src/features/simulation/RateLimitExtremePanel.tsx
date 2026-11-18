@@ -79,6 +79,7 @@ export default function RateLimitExtremePanel() {
         settings={settings}
         history={sim.history}
         tick={sim.tick}
+        running={sim.running}
       />
     </section>
   );

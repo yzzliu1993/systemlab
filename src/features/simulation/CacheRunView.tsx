@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import type { CacheRun } from '@/domain/simulation/cache';
-import { fill } from '@/features/simulation/parts';
+import { LiveSummary, fill } from '@/features/simulation/parts';
 import { useT } from '@/stores/language';
 
 const MAX_QUEUE_BOXES = 20;
@@ -36,7 +36,13 @@ export function summarize(run: CacheRun) {
 }
 
 /** The run on screen: tick, cache contents, database queue, stats. */
-export default function CacheRunView({ run }: { run: CacheRun }) {
+export default function CacheRunView({
+  run,
+  running = false,
+}: {
+  run: CacheRun;
+  running?: boolean;
+}) {
   const t = useT();
   const s = summarize(run);
   const total = run.settings.ticks;
@@ -57,15 +63,16 @@ export default function CacheRunView({ run }: { run: CacheRun }) {
         {fill(t('sim.tick'), { tick: run.tick, total })}
         {run.tick >= total && ` ${t('sim.complete')}`}
       </p>
-      <p aria-live="polite" className="sr-only">
-        {fill(t('sim.cache.stats.summary'), {
+      <LiveSummary
+        running={running}
+        text={fill(t('sim.cache.stats.summary'), {
           tick: run.tick,
           hitRate: percent,
           dbReads: s.dbReads,
           dbQueue: s.dbQueue,
           staleReads: s.staleReads,
         })}
-      </p>
+      />
       <div className="flex flex-wrap gap-3">
         <section
           aria-label={t('sim.cache.contents.title')}
